@@ -1,5 +1,5 @@
 import * as d3 from "d3";
-import { ShortestPath, ShortestPathTable } from "../ShortestPath";
+import { ShortestPath, type ShortestPathTable } from "../ShortestPath";
 import { Context } from "../Context";
 import { Graph } from "../GraphView/Basic/Graph";
 

@@ -1,5 +1,5 @@
 import { Context } from "../Context";
-import { Data, NodeTable } from "../Global/Data";
+import { Data, type NodeTable } from "../Global/Data";
 import { Names } from "../Global/Names";
 import { Graph } from "../GraphView/Basic/Graph";
 

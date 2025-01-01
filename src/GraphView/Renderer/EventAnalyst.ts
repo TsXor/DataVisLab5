@@ -1,6 +1,6 @@
 import * as d3 from "d3";
-import { Graph, Node, Edge } from "../Basic/Graph";
-import { CanvasEvent, CanvasEventCallback, CanvasEventManager } from "./EventManager";
+import { Graph, type Node, type Edge } from "../Basic/Graph";
+import { type CanvasEvent, type CanvasEventCallback, CanvasEventManager } from "./EventManager";
 
 const NODE_DEFAULT_RADIUS = 20; // 节点的默认半径
 

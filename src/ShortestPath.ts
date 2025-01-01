@@ -1,4 +1,4 @@
-import { AdjacencyTable, Data } from "./Global/Data";
+import { type AdjacencyTable, Data } from "./Global/Data";
 import PriorityQueue from "priorityqueuejs";
 import { Graph } from "./GraphView/Basic/Graph";
 

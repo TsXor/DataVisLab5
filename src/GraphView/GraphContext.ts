@@ -5,7 +5,7 @@ import { Graph } from "./Basic/Graph";
 import { CanvasEventManager } from "./Renderer/EventManager";
 import { CanvasEventAnalyst } from "./Renderer/EventAnalyst";
 import { ForceSimulator } from "./Renderer/Simulator";
-import { Path } from "../Global/Choosed";
+import { type Path } from "../Global/Choosed";
 
 export class GraphContext {
   private svg: d3.Selection<any, any, any, any>;

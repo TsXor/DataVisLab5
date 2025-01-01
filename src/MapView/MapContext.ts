@@ -1,6 +1,6 @@
 import * as d3 from "d3";
 import { Context } from "../Context";
-import { NodeTable } from "../Global/Data";
+import { type NodeTable } from "../Global/Data";
 import { Graph } from "../GraphView/Basic/Graph";
 
 export class MapContext {

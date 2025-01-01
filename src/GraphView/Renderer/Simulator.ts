@@ -1,5 +1,5 @@
 import * as d3 from "d3";
-import { Graph, Node, Edge } from "../Basic/Graph";
+import { Graph, type Node, type Edge } from "../Basic/Graph";
 import { CanvasEventManager } from "./EventManager";
 import { GraphEventManager } from "../Basic/EventManager";
 import { Names } from "../../Global/Names";

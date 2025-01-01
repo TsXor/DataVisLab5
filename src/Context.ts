@@ -8,7 +8,7 @@ import { ShortestPath } from "./ShortestPath";
 import { LeftSidePanel, RightSidePanel, TopSidePanel } from "./SidePanel/SidePanel";
 import { DensityCurve } from "./SidePanel/DensityCurve";
 import { HeatMap } from "./SidePanel/HeatMap";
-import { Choosed, Path } from "./Global/Choosed";
+import { Choosed, type Path } from "./Global/Choosed";
 import { Graph } from "./GraphView/Basic/Graph";
 import { LegendContext } from "./Legends/LegendsContext";
 
