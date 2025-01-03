@@ -4,7 +4,7 @@ import { useEventListener } from '@vueuse/core';
 import BaseSwitch from './BaseSwitch.vue';
 import UseVNode from './UseVNode.vue';
 
-const choice = defineModel({ type: Number, default: 0, });
+const choice = defineModel({ type: Number, default: -1, });
 
 const dragger = useTemplateRef('dragger');
 
@@ -26,7 +26,7 @@ watch(mouseState, state => {
 </script>
 
 <template>
-  <BaseSwitch v-model="choice">
+  <BaseSwitch v-model="choice" class="switch-container">
     <template #choice="{vnode, chosen}">
       <!-- 选项按钮 -->
       <button class="tab-button" :class="{chosen: chosen}">{{ vnode.props!.name }}</button>
@@ -48,7 +48,7 @@ watch(mouseState, state => {
   </BaseSwitch>
 </template>
 
-<style>
+<style scoped>
 .switch-container {
   display: flex;
   flex-direction: row;
@@ -75,7 +75,7 @@ watch(mouseState, state => {
   overflow: scroll;
 }
 
-.choice-list {
+:deep(.choice-list) {
   background-color: #3a3a3a;
   border-right: 2px solid #ccc;
   box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);

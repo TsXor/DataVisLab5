@@ -15,7 +15,7 @@ export default defineComponent({
 
   slots: Object as SlotsType<{
     default?: {}
-    choice: { vnode: VNode, chosen: boolean },
+    choice: { index: number, vnode: VNode, chosen: boolean },
     item: { vnode: VNode, },
   }>,
 
@@ -34,11 +34,11 @@ export default defineComponent({
     return () => {
       const itemFragments = slots.default === undefined ? [] : slots.default();
       const itemNodes = expandFragments(itemFragments);
-      return <div class="switch-container">
+      return <div>
         <div class="choice-list">
           { itemNodes.map((vnode, index) => 
             <div onClick={ () => onClickIndex(index) }>
-              { slots.choice({vnode: vnode, chosen: index == choice.value}) }
+              { slots.choice({index: index, vnode: vnode, chosen: index == choice.value}) }
             </div>
           ) }
         </div>
