@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { reactive, ref, useTemplateRef, watch } from 'vue';
+import { reactive, useTemplateRef, watch } from 'vue';
 import { useEventListener } from '@vueuse/core';
 import BaseSwitch from './BaseSwitch.vue';
 import UseVNode from './UseVNode.vue';
 
 const choice = defineModel({ type: Number, default: -1, });
 
-const dragger = useTemplateRef('dragger');
+const dragger = $(useTemplateRef('dragger'));
 
 const mouseState = reactive({
   x: 0, y: 0,
@@ -15,12 +15,12 @@ const mouseState = reactive({
 useEventListener('mouseup', e => mouseState.isDragging = false);
 useEventListener('mousemove', e => { mouseState.x = e.pageX; mouseState.y = e.pageY; });
 
-const floatingWidth = ref(visualViewport!.width * 40 / 100);
+let floatingWidth = $ref(visualViewport!.width * 40 / 100);
 watch(mouseState, state => {
   if (state.isDragging) {
-    const draggerRect = dragger.value!.getBoundingClientRect();
+    const draggerRect = dragger!.getBoundingClientRect();
     const draggerCenter = (draggerRect.left + draggerRect.right) / 2;
-    floatingWidth.value += state.x! - draggerCenter;
+    floatingWidth += state.x! - draggerCenter;
   }
 });
 </script>
@@ -32,16 +32,18 @@ watch(mouseState, state => {
       <button class="tab-button" :class="{chosen: chosen}">{{ vnode.props!.name }}</button>
     </template>
     <template #item="{vnode}">
-      <!-- 第二层侧边栏 -->
-      <div class="side-floating" :style="{ width: `${floatingWidth}px` }">
-        <div class="info-container">
-          <h2 class="info-title">{{ vnode.props!.name }}</h2>
-          <div class="info-content"><UseVNode :vnode="vnode"/></div>
+      <div style="position: relative; height: 100%">
+        <!-- 第二层侧边栏 -->
+        <div class="side-floating" :style="{ width: `${floatingWidth}px` }">
+          <div class="info-container">
+            <h2 class="info-title">{{ vnode.props!.name }}</h2>
+            <div class="info-content"><UseVNode :vnode="vnode"/></div>
+          </div>
+          <!-- 拖拽控件 -->
+          <div class="dragger" ref="dragger"
+            @mousedown.prevent="mouseState.isDragging = true"
+          />
         </div>
-        <!-- 拖拽控件 -->
-        <div class="dragger" ref="dragger"
-          @mousedown.prevent="mouseState.isDragging = true"
-        />
       </div>
     </template>
     <slot/>
