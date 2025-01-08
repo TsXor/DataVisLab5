@@ -11,6 +11,7 @@
     "type-check": "vue-tsc --build"
   },
   "devDependencies": {
+    "@nberlette/clsx": "^0.3.1",
     "@tsconfig/node22": "^22.0.0",
     "@types/d3": "^7.4.3",
     "@types/jest": "^29.5.14",

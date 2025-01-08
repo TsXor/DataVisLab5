@@ -1,28 +1,15 @@
 <script setup lang="ts">
-import { reactive, useTemplateRef, watch } from 'vue';
-import { useEventListener } from '@vueuse/core';
+/**
+ * 左侧信息栏，此部件与具体的信息内容解耦。
+ */
+
 import BaseSwitch from './BaseSwitch.vue';
 import UseVNode from './UseVNode.vue';
+import Dragger from './Dragger.vue';
 
 const choice = defineModel({ type: Number, default: -1, });
 
-const dragger = $(useTemplateRef('dragger'));
-
-const mouseState = reactive({
-  x: 0, y: 0,
-  isDragging: false,
-});
-useEventListener('mouseup', e => mouseState.isDragging = false);
-useEventListener('mousemove', e => { mouseState.x = e.pageX; mouseState.y = e.pageY; });
-
 let floatingWidth = $ref(visualViewport!.width * 40 / 100);
-watch(mouseState, state => {
-  if (state.isDragging) {
-    const draggerRect = dragger!.getBoundingClientRect();
-    const draggerCenter = (draggerRect.left + draggerRect.right) / 2;
-    floatingWidth += state.x! - draggerCenter;
-  }
-});
 </script>
 
 <template>
@@ -40,9 +27,7 @@ watch(mouseState, state => {
             <div class="info-content"><UseVNode :vnode="vnode"/></div>
           </div>
           <!-- 拖拽控件 -->
-          <div class="dragger" ref="dragger"
-            @mousedown.prevent="mouseState.isDragging = true"
-          />
+          <Dragger class="dragger" @movement="e => floatingWidth += e.x"/>
         </div>
       </div>
     </template>
@@ -82,26 +67,36 @@ watch(mouseState, state => {
   border-right: 2px solid #ccc;
   box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
   overflow: hidden;
-  text-align: center;
-  width: 100px;
+
+  width: 90px;
   height: 100%;
-  padding: 10px;
+  padding: 20px 15px;
+  gap: 15px;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: stretch;
 }
 
 .tab-button {
   background-color: #fff;
   border: 1px solid #ddd;
   font-size: 16px;
-  margin: 5px;
-  padding: 10px;
-  width: 80%;
-  text-align: middle;
+  width: 100%;
+  aspect-ratio: 32/17;
   cursor: pointer;
+}
+
+.tab-button:hover {
+  background-color: #93caf6;
+  transition: background-color 0.2s;
 }
 
 .tab-button.chosen {
   background-color: #2196f3;
   color: white;
+  transition: background-color 0.4s;
 }
 
 .dragger {

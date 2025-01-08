@@ -5,6 +5,7 @@
  */
 
 import { type VNode } from 'vue';
+import { clsx } from "@nberlette/clsx";
 import { expandFragments } from './utils';
 
 let choice = $(defineModel({ type: Number, default: -1, }));
@@ -28,11 +29,12 @@ defineRender(() => {
   const itemNodes = expandFragments(itemFragments);
   return <div>
     <div class="choice-list">
-      { itemNodes.map((vnode, index) => 
-        <div onClick={ () => onClickIndex(index) }>
-          { slots.choice({index: index, vnode: vnode, chosen: index == choice}) }
-        </div>
-      ) }
+      { itemNodes.map((vnode, index) => {
+        const chosen = index == choice;
+        return <div class={clsx('choice-item', {chosen: chosen})} onClick={() => onClickIndex(index)}>
+          { slots.choice({index: index, vnode: vnode, chosen: chosen}) }
+        </div>;
+      }) }
     </div>
     <div class="shown-item">
       { choice === -1 ? null : slots.item({vnode: itemNodes[choice]}) }
