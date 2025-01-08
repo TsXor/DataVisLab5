@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import InfoPanel from './components/InfoPanel.vue'
+import VisualPanel from './components/VisualPanel.vue';
 
 import resInfoIntro from '@/assets/html/intro.html?raw';
 import resInfoFilter from '@/assets/html/filter.html?raw';
 import resInfoParam from '@/assets/html/param.html?raw';
+import resIconDensityCurve from '@/assets/img/densitycurve.png'
+import resIconHeatmap from '@/assets/img/heatmap.png'
 </script>
 
 <template>
@@ -15,7 +18,10 @@ import resInfoParam from '@/assets/html/param.html?raw';
   </InfoPanel>
   <div id="map-view"/>
   <!-- 右侧栏 -->
-  <div id="right-panel"></div>
+  <VisualPanel id="right-panel">
+    <div :icon="resIconDensityCurve"></div>
+    <div :icon="resIconHeatmap"></div>
+  </VisualPanel>
 </template>
 
 <style>
