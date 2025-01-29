@@ -28,6 +28,7 @@
     "typescript": "~5.6.3",
     "unplugin-vue-macros": "^2.13.7",
     "vite": "^6.0.5",
+    "vite-plugin-dynamic-import": "^1.6.0",
     "vite-plugin-vue-devtools": "^7.6.8",
     "vue-tsc": "^2.1.10"
   },

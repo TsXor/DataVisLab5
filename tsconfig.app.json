@@ -7,7 +7,7 @@
     "paths": { "@/*": ["./src/*"] },
     /* 以下为项目自定义选项 */
     "target": "ES6",
-    "module": "ES6",
+    "module": "ES2020",
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,

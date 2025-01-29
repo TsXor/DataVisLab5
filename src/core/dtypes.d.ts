@@ -13,8 +13,8 @@ type RegionProps = {
   childNum: number;
 };
 
-type Region = GeoJSON.Feature<GeoJSON.Polygon, RegionProps>;
-type RegionCollection = GeoJSON.FeatureCollection<GeoJSON.Polygon, RegionProps>;
+type Region = GeoJSON.Feature<GeoJSON.Geometry, RegionProps>;
+type RegionCollection = GeoJSON.FeatureCollection<GeoJSON.Geometry, RegionProps>;
 
 namespace legacy {
 
@@ -52,17 +52,5 @@ interface MapData {
   provinces: data.RegionCollection;
   counties: data.RegionCollection;
 }; 
-
-interface TrainStationData extends data.Station {
-  degree: number;
-};
-
-type TrainRouteData = {
-  id: {}; name: string;
-  source: [number, number];
-  target: [number, number];
-  shifts: number; // 车次数量
-  degree: number;
-};
 
 } // namespace render

@@ -61,3 +61,19 @@ export function enumerate<T extends Iterable<any>>(iterable: T) {
   };
   return zip(increment, iterable);
 }
+
+export type Result<Success, Failure> = {
+  success: true;
+  data: Success;
+} | {
+  success: false;
+  failure: Failure;
+};
+
+export function asSuccess<Success, Failure>(result: Result<Success, Failure>) {
+  return (result as { success: true; data: Success }).data;
+}
+
+export function asFailure<Success, Failure>(result: Result<Success, Failure>) {
+  return (result as { success: false; failure: Failure }).failure;
+}

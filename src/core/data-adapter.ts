@@ -1,16 +1,10 @@
-import d3 from "d3";
 import type { data, render } from "./dtypes";
 import { Graph } from "./graph/graph";
+import type { Result } from "./utils";
 
-import urlData from '@/data?url'
-
-type Result<Success, Failure> = {
-  success: true;
-  data: Success;
-} | {
-  success: false;
-  failure: Failure;
-};
+function unwrapImport<T>(promise: Promise<any>): Promise<T> {
+  return promise.then(o => o.default) as Promise<T>;
+}
 
 type MapDataFailure = {
   provinces: boolean;
@@ -22,14 +16,14 @@ export async function collectMapData(): Promise<Result<render.MapData, MapDataFa
   let success = true;
   const failure: MapDataFailure = { provinces: false, countieIds: false };
   const [ provinces, countieIds ] = await Promise.all([
-    d3.json<data.RegionCollection>(`${urlData}/map/provinces.json`),
-    d3.json<number[]>(`${urlData}/map/countie-ids.json`),
+    unwrapImport<data.RegionCollection>(import('@/data/map/provinces.json')),
+    unwrapImport<number[]>(import('@/data/map/countie-ids.json')),
   ]);
   if (!provinces) { success = false; failure.provinces = true; }
   if (!countieIds) { success = false; failure.countieIds = true; }
   if (!success) return { success, failure };
   failure.counties = [];
-  let fetchId = (id: number) => d3.json<data.RegionCollection>(`${urlData}/map/counties/${id}.json`);
+  let fetchId = (id: number) => unwrapImport<data.RegionCollection>(import(`@/data/map/counties/${id}.json`));
   const features = (await Promise.all(countieIds!.map(fetchId))).flatMap((countie, i) => {
     if (countie) { return countie.features; }
     else { failure.counties!.push(countieIds![i]); return []; }
@@ -39,7 +33,7 @@ export async function collectMapData(): Promise<Result<render.MapData, MapDataFa
   return { success, data: { provinces: provinces!, counties: { type: "FeatureCollection", features } } };
 }
 
-type TrainGraph = Graph<data.Station, data.Route>;
+export type TrainGraph = Graph<data.Station, data.Route>;
 
 type TrainGraphFailure = {
   stations: boolean;
@@ -50,8 +44,8 @@ export async function collectTrainGraph(): Promise<Result<TrainGraph, TrainGraph
   let success = true;
   const failure: TrainGraphFailure = { stations: false, routes: false };
   const [ stations, routes ] = await Promise.all([
-    d3.json<data.StationData>(`${urlData}/graph/stations.json`),
-    d3.json<data.RouteData>(`${urlData}/graph/routes.json`),
+    unwrapImport<data.StationData>(import('@/data/graph/stations.json')),
+    unwrapImport<data.RouteData>(import('@/data/graph/routes.json')),
   ]);
   if (!stations) { success = false; failure.stations = true; }
   if (!routes) { success = false; failure.routes = true; }

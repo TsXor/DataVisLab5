@@ -5,6 +5,7 @@ import vue from '@vitejs/plugin-vue'
 import vueJsx from '@vitejs/plugin-vue-jsx'
 import vueDevTools from 'vite-plugin-vue-devtools'
 import vueMacros from 'unplugin-vue-macros/vite'
+import dynamicImport from 'vite-plugin-dynamic-import'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -13,6 +14,7 @@ export default defineConfig({
     vueJsx(),
     vueDevTools(),
     vueMacros(),
+    dynamicImport(),
   ],
   resolve: {
     alias: {
