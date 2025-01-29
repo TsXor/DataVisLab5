@@ -6,7 +6,7 @@
 
 import { type VNode } from 'vue';
 import { clsx } from "@nberlette/clsx";
-import { expandFragments } from './utils';
+import { expandFragments } from '@/vueshim/utils';
 
 let choice = $(defineModel({ type: Number, default: -1, }));
 
