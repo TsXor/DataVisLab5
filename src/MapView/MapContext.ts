@@ -544,7 +544,7 @@ export class MapContext {
       .selectAll<SVGPathElement, any>(".train-line")
       .filter((d: any) => d.id === id) // 根据 ID 筛选目标线段
       .attr("d", () => lineGenerator([sourceGeo, targetGeo])) // 更新路径
-      .attr("stroke", this.lineColorEncoder()(lineData.trainShifts, null)) // 根据规则更新颜色
+      .attr("stroke", this.lineColorEncoder()) // 根据规则更新颜色
       .attr("stroke-width", this.lineWidthEncoder(transform)) // 根据缩放更新宽度
       .attr("opacity", 0.7); // 设置透明度
   }
