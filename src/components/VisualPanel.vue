@@ -4,9 +4,34 @@
  */
 
 import BaseSwitch from './BaseSwitch.vue';
+import Dragger from './Dragger.vue';
 import UseVNode from './UseVNode.vue';
 
+import resIconMove from '@/assets/img/move.svg'
+import resIconResize from '@/assets/img/resize.svg'
+
 const choice = defineModel({ type: Number, default: -1, });
+
+const floating = $ref({
+  width: visualViewport!.width * 50 / 100,
+  height: visualViewport!.height * 75 / 100,
+  cx: visualViewport!.width / 2,
+  cy: visualViewport!.height / 2,
+  resize: (x: number, y: number) => {
+    floating.width += x;
+    floating.height += y;
+  },
+  move: (x: number, y: number) => {
+    floating.cx += x;
+    floating.cy += y;
+  },
+  toStyle: () => ({
+    width: `${floating.width}px`,
+    height: `${floating.height}px`,
+    left: `${floating.cx - floating.width / 2}px`,
+    top: `${floating.cy - floating.height / 2}px`,
+  })
+});
 </script>
 
 <template>
@@ -16,13 +41,15 @@ const choice = defineModel({ type: Number, default: -1, });
       <img class="tab-icon" :class="{chosen: chosen}" :src="vnode.props!.icon"/>
     </template>
     <template #item="{vnode}">
-      <Teleport to="#map-view">
-        <div style="position: relative; width: 100%">
-          <!-- 第二层侧边栏 -->
-          <div class="popup-floating">
+      <Teleport to="body">
+        <!-- 第二层侧边栏 -->
+        <div class="popup-floating" :style="floating.toStyle()">
+          <div class="control-bar">
+            <Dragger class="resizer" @movement="e => { floating.resize(-e.x, -e.y); floating.move(e.x / 2, e.y / 2); }"><img :src="resIconResize"/></Dragger>
+            <Dragger class="mover" @movement="e => { floating.move(e.x, e.y); }"><img :src="resIconMove"/></Dragger>
             <button class="closer" @click="choice = -1">×</button>
-            <div class="widget-container"><UseVNode :vnode="vnode"/></div>
           </div>
+          <div class="widget-container"><UseVNode :vnode="vnode"/></div>
         </div>
       </Teleport>
     </template>
@@ -54,13 +81,36 @@ const choice = defineModel({ type: Number, default: -1, });
   opacity: 1;
 }
 
+.control-bar {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
 .closer {
-  position: absolute;
-  right: 10px;
-  top: 10px;
+  margin: 10px;
   padding: 4px;
   border: none;
   border-radius: 5px;
+  user-select: none;
+  cursor: pointer;
+}
+
+.mover {
+  margin: 10px;
+  width: 20px;
+  height: 20px;
+  user-select: none;
+  cursor: pointer;
+}
+
+.resizer {
+  margin: 10px;
+  width: 20px;
+  height: 20px;
+  user-select: none;
+  cursor: pointer;
 }
 
 :deep(.choice-list) {
