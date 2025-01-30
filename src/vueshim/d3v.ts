@@ -1,6 +1,6 @@
-import d3 from 'd3';
-import { readonly, ref, watch } from 'vue';
-import { type ReadonlyNullableRef, computeNullableRef } from './utils'
+import * as d3 from 'd3';
+import { computed, readonly, ref, watch } from 'vue';
+import { type ReadonlyNullableRef, type ReadonlyRef } from './utils'
 
 export namespace d3v {
 
@@ -17,9 +17,9 @@ export type Selection<
  * @param nodeRef 元素的引用，可以来自于`useTemplateRef`
  * @returns D3选择的引用
  */
-export function selectRef<GElement extends d3.BaseType, OldDatum>(
-  nodeRef: ReadonlyNullableRef<GElement>
-) { return computeNullableRef(nodeRef, node => d3.select<GElement, OldDatum>(node)); }
+export function selectRef<GElement extends d3.BaseType, OldDatum>(nodeRef: ReadonlyNullableRef<GElement>) {
+  return computed(() => nodeRef.value ? d3.select<GElement, OldDatum>(nodeRef.value) : null);
+}
 
 export type ZoomConfigOptions = {
   scaleExtent?: [number, number];
@@ -90,11 +90,11 @@ export class Zoom<ZoomRefElement extends d3.ZoomedElementBaseType, Datum> {
  */
 export function useZoomTransform<ZoomRefElement extends d3.ZoomedElementBaseType, Datum>(
   zoom: Zoom<ZoomRefElement, Datum>, name: string = '_state'
-): ReadonlyNullableRef<d3.ZoomTransform> {
-  const transformState = ref<d3.ZoomTransform | null>(null);
+): ReadonlyRef<d3.ZoomTransform> {
+  const transformState = ref<d3.ZoomTransform>(d3.zoomIdentity);
   zoom.on(`zoom.${name}`, event => transformState.value = event.transform);
   watch(zoom.selection, selection => {
-    transformState.value = selection ? d3.zoomTransform(selection.node()!) : null;
+    transformState.value = selection ? d3.zoomTransform(selection.node()!) : d3.zoomIdentity;
   });
   return readonly(transformState);
 }
