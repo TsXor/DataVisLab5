@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import InfoPanel from './components/InfoPanel.vue'
 import VisualPanel from './components/VisualPanel.vue';
+import MapView from './components/MapView.vue';
 import MapSuspense from './components/MapSuspense.vue';
 
 import resInfoIntro from '@/assets/html/intro.html?raw';
@@ -17,7 +18,9 @@ import resIconHeatmap from '@/assets/img/heatmap.png'
     <div name="过滤器"><div v-html="resInfoFilter"/></div>
     <div name="参数"><div v-html="resInfoParam"/></div>
   </InfoPanel>
-  <MapSuspense id="map-view"/>
+  <MapSuspense id="map-view" v-slot="{ graph, map }">
+    <MapView :graph="graph" :map="map"/>
+  </MapSuspense>
   <!-- 右侧栏 -->
   <VisualPanel id="right-panel">
     <div :icon="resIconDensityCurve"></div>

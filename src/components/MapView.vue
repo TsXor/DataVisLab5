@@ -11,7 +11,7 @@ const { viewSize, mapCenter, mapScale, graph } = defineProps({
   viewSize: { type: Object as PropType<[number, number]>, default: [975, 700] },
   mapCenter: { type: Object as PropType<[number, number]>, default: [100, 38] },
   mapScale: { type: Number, default: 800 },
-  borders: { type: Object as PropType<render.MapData>, required: true },
+  map: { type: Object as PropType<render.MapData>, required: true },
   graph: { type: Object as PropType<TrainGraph>, required: true },
 });
 
@@ -87,6 +87,9 @@ function toggleChosenRoute(event: MouseEvent, id: EdgeOf<typeof graph>) {
 
 // 此处必须为shallowRef，否则region会被递归转换，导致判等失效。
 let focusedRegion = $shallowRef<{region: data.Region, pos: [number, number]} | null>(null);
+function toggleFocusedRegion(event: MouseEvent, region: data.Region) {
+  focusedRegion = focusedRegion?.region === region ? null : { region, pos: d3.pointer(event, container.value!.node()!) };
+}
 // 在省份注意点转换时，执行缩放
 watch($$(focusedRegion), focus => {
   const [width, height] = viewSize;
@@ -108,10 +111,6 @@ watch($$(focusedRegion), focus => {
     );
   }
 });
-
-function toggleFocusedRegion(event: MouseEvent, region: data.Region) {
-  focusedRegion = focusedRegion?.region === region ? null : { region, pos: d3.pointer(event, container.value!.node()!) };
-}
 </script>
 
 <template>
@@ -121,19 +120,19 @@ function toggleFocusedRegion(event: MouseEvent, region: data.Region) {
         <g class="map">
           <!-- provinces -->
           <g stroke-width="2">
-            <template v-for="feat in borders.provinces.features">
+            <template v-for="feat in map.provinces.features">
               <path class="rough-border" :d="geoPath(feat)!"/>
             </template>
           </g>
           <!-- counties -->
           <g :stroke-width="0.5 / transform.k">
-            <template v-for="feat in borders.counties.features">
+            <template v-for="feat in map.counties.features">
               <path class="precise-border" :d="geoPath(feat)!"><title :text="feat.properties.name"/></path>
             </template>
           </g>
           <!-- provinces -->
           <g :stroke-width="0 / transform.k">
-            <template v-for="feat in borders.provinces.features">
+            <template v-for="feat in map.provinces.features">
               <path class="precise-border" :d="geoPath(feat)!"
                 :class="{ focused: focusedRegion?.region === feat }"
                 @click.stop="event => toggleFocusedRegion(event, feat)"
