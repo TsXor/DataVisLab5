@@ -62,7 +62,8 @@ const lineGenerator = d3.line()
   .x(d => projection(d)![0])
   .y(d => projection(d)![1]);
 
-let hoveredStation = $ref<VertexOf<typeof graph> | null>(null);
+// 此处必须为shallowRef，否则vertex会被递归转换，导致判等失效。
+let hoveredStation = $shallowRef<VertexOf<typeof graph> | null>(null);
 watch(() => graph, () => { hoveredStation = null; });
 function* reorderedStations() {
   for (const vertex of graph.vertices.values()) { if (vertex !== hoveredStation) yield vertex; }
@@ -153,7 +154,10 @@ function toggleFocusedRegion(event: MouseEvent, region: data.Region) {
         </g>
         <g class="nodes">
           <template v-for="vertex in reorderedStations()" :key="vertex">
-            <g class="station" :transform="geoToTranslation(vertex.data.geo)" @mouseover="hoveredStation = vertex">
+            <g class="station" :class="{ hovered: hoveredStation === vertex }"
+              :transform="geoToTranslation(vertex.data.geo)"
+              @mouseover="hoveredStation = vertex"
+            >
               <rect class="station-text-bg"
                 :x="nodeRadiusScale(stationDegree(vertex)) / transform.k" :y="-10 / transform.k"
                 :width="50 / transform.k" :height="20 / transform.k"
@@ -209,13 +213,13 @@ svg {
   transition: fill 250ms; /* d3的默认duration */
 }
 
-.station:hover {
-  z-index: 1;
-}
-
 .station-text-bg {
   fill: white;
   opacity: 0.7;
+}
+
+.station.hovered > .station-text-bg {
+  opacity: 1;
 }
 
 .station-point {
