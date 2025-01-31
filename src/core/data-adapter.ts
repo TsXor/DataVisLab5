@@ -1,5 +1,6 @@
+import * as d3 from 'd3';
 import type { data, render } from "./dtypes";
-import { Graph } from "./graph/graph";
+import { Graph, type EdgeOf, type VertexOf } from "./graph/graph";
 import type { Result } from "./utils";
 
 function unwrapImport<T>(promise: Promise<any>): Promise<T> {
@@ -58,4 +59,17 @@ export async function collectTrainGraph(): Promise<Result<TrainGraph, TrainGraph
     }
   }
   return { success, data: G };
+}
+
+export function stationDegree(station: VertexOf<TrainGraph>) {
+  return station.in.size + station.out.size;
+}
+export function routeDegree(route: EdgeOf<TrainGraph>) {
+  return (stationDegree(route.source) + stationDegree(route.target)) / 2;
+}
+export function routeShiftApprox(route: EdgeOf<TrainGraph>) {
+  // 哦天哪我也不知道这是啥。
+  const whatIsThis = d3.min([route.data.shifts, 5])! + 1;
+  const whatIsThat = d3.min([(route.source.data.access + route.target.data.access) / 2, 31921.15])!;
+  return whatIsThis * whatIsThat;
 }

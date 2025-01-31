@@ -4,7 +4,7 @@ import { useTemplateRef, watch, type PropType } from 'vue';
 import { d3v } from '@/vueshim/d3v';
 import type { data, render } from '@/core/dtypes';
 import type { EdgeOf, VertexOf } from '@/core/graph/graph';
-import type { TrainGraph } from '@/core/data-adapter';
+import { type TrainGraph, stationDegree, routeDegree, routeShiftApprox } from '@/core/data-adapter';
 
 
 const { viewSize, mapCenter, mapScale, graph } = defineProps({
@@ -38,7 +38,7 @@ function geoToTranslation(geo: [number, number]) {
   return `translate(${a}, ${b})`;
 }
 
-const geoPath = $computed(() => d3.geoPath().projection(projection));
+const geoPath = $computed(() => d3.geoPath(projection));
 
 // TODO: 根据数据范围动态决定下列比例尺。
 
@@ -61,19 +61,6 @@ const lineColorScale = d3.scaleLinear<string>()
 const lineGenerator = d3.line()
   .x(d => projection(d)![0])
   .y(d => projection(d)![1]);
-
-function stationDegree(station: VertexOf<typeof graph>) {
-  return station.in.size + station.out.size;
-}
-function routeDegree(route: EdgeOf<typeof graph>) {
-  return (stationDegree(route.source) + stationDegree(route.target)) / 2;
-}
-function routeShiftApprox(route: EdgeOf<typeof graph>) {
-  // 哦天哪我也不知道这是啥。
-  const whatIsThis = d3.min([route.data.shifts, 5])! + 1;
-  const whatIsThat = d3.min([(route.source.data.access + route.target.data.access) / 2, 31921.15])!;
-  return whatIsThis * whatIsThat;
-}
 
 let hoveredStation = $ref<VertexOf<typeof graph> | null>(null);
 watch(() => graph, () => { hoveredStation = null; });
