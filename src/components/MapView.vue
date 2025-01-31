@@ -74,14 +74,13 @@ let chosenSource = $(defineModel<VertexOf<typeof graph> | null>('chosenSource', 
 let chosenTarget = $(defineModel<VertexOf<typeof graph> | null>('chosenTarget', { default: null }));
 let chosenRoute = $(defineModel<EdgeOf<typeof graph> | null>('chosenRoute', { default: null }));
 watch(() => graph, () => { chosenSource = null; chosenTarget = null; chosenRoute = null; });
-
-function toggleChosenStation(event: MouseEvent, id: VertexOf<typeof graph>) {
-  switch (event.button) {
-    case 0: chosenSource = chosenSource === id ? null : id; break;
-    case 2: chosenTarget = chosenTarget === id ? null : id; break;
-  }
+function toggleChosenSource(id: VertexOf<typeof graph>) {
+  chosenSource = chosenSource === id ? null : id;
 }
-function toggleChosenRoute(event: MouseEvent, id: EdgeOf<typeof graph>) {
+function toggleChosenTarget(id: VertexOf<typeof graph>) {
+  chosenTarget = chosenTarget === id ? null : id;
+}
+function toggleChosenRoute(id: EdgeOf<typeof graph>) {
   chosenRoute = chosenRoute === id ? null : id;
 }
 
@@ -144,7 +143,7 @@ watch($$(focusedRegion), focus => {
           <template v-for="edge in graph.outOrderEdges()" :key="edge">
             <path class="route"
               :class="{ chosen: edge === chosenRoute }"
-              @click.stop="event => toggleChosenRoute(event, edge)"
+              @click.stop="toggleChosenRoute(edge)"
               :d="lineGenerator([edge.source.data.geo, edge.target.data.geo])!"
               :stroke-width="lineWidthScale(routeDegree(edge)) / transform.k"
               :stroke="lineColorScale(routeShiftApprox(edge))"
@@ -164,7 +163,8 @@ watch($$(focusedRegion), focus => {
               />
               <circle class="station-point"
                 :class="{ 'chosen-src': vertex === chosenSource, 'chosen-dst': vertex === chosenTarget }"
-                @click.prevent.stop="event => toggleChosenStation(event, vertex)"
+                @click.prevent.stop="toggleChosenSource(vertex)"
+                @contextmenu.prevent.stop="toggleChosenTarget(vertex)"
                 :stroke-width="2 / transform.k"
                 :r="nodeRadiusScale(stationDegree(vertex)) / transform.k" 
                 :fill="nodeColorScale(vertex.data.access)"
