@@ -3,16 +3,16 @@ import * as d3 from 'd3';
 import { useTemplateRef, watch, type PropType } from 'vue';
 import { d3v } from '@/vueshim/d3v';
 import type { data, render } from '@/core/dtypes';
-import type { EdgeOf, VertexOf } from '@/core/graph/graph';
-import { type TrainGraph, stationDegree, routeDegree, routeShiftApprox } from '@/core/data-adapter';
 
+defineSlots<{
+  default(props: { transform: d3.ZoomTransform; projection: d3.GeoProjection }): any
+}>();
 
-const { viewSize, mapCenter, mapScale, graph } = defineProps({
+const { viewSize, mapCenter, mapScale } = defineProps({
   viewSize: { type: Object as PropType<[number, number]>, default: [975, 700] },
   mapCenter: { type: Object as PropType<[number, number]>, default: [100, 38] },
   mapScale: { type: Number, default: 800 },
   map: { type: Object as PropType<render.MapData>, required: true },
-  graph: { type: Object as PropType<TrainGraph>, required: true },
 });
 
 const viewBox = $computed(() => {
@@ -33,59 +33,7 @@ const projection = $computed(() => {
     .translate([width / 2, height / 2]) /* 平移到屏幕中心 */;
 })
 
-function geoToTranslation(geo: [number, number]) {
-  const [a, b] = projection(geo)!;
-  return `translate(${a}, ${b})`;
-}
-
 const geoPath = $computed(() => d3.geoPath(projection));
-
-// TODO: 根据数据范围动态决定下列比例尺。
-
-const nodeRadiusScale = d3.scaleLinear<number>()
-  .domain([0, 15])
-  .range([5, 15]);
-
-const nodeColorScale = d3.scaleLinear<string>()
-  .domain([10000, 25000]) // 假设节点的数量在 0 到 100 之间
-  .range(["steelblue", "tomato"]);
-
-const lineWidthScale = d3.scaleLinear<number>()
-  .domain([0, 30]) // 假设节点的数量在 0 到 100 之间
-  .range([1.5, 10.5]);
-
-const lineColorScale = d3.scaleLinear<string>()
-  .domain([10000, 160000])
-  .range(["steelblue", "tomato"]);
-
-const lineGenerator = d3.line()
-  .x(d => projection(d)![0])
-  .y(d => projection(d)![1]);
-
-// 此处必须为shallowRef，否则vertex会被递归转换，导致判等失效。
-let hoveredStation = $shallowRef<VertexOf<typeof graph> | null>(null);
-let hoveredRoute = $shallowRef<EdgeOf<typeof graph> | null>(null);
-watch(() => graph, () => { hoveredStation = null; hoveredRoute = null; });
-function* reorderedStations() {
-  // 如果hoveredStation不为空，此函数会将其置于最后。
-  // 这是因为svg没有z-index属性，最后渲染的在最上方。
-  for (const vertex of graph.vertices.values()) { if (vertex !== hoveredStation) yield vertex; }
-  if (hoveredStation) yield hoveredStation;
-}
-
-let chosenSource = $(defineModel<VertexOf<typeof graph> | null>('chosenSource', { default: null }));
-let chosenTarget = $(defineModel<VertexOf<typeof graph> | null>('chosenTarget', { default: null }));
-let chosenRoute = $(defineModel<EdgeOf<typeof graph> | null>('chosenRoute', { default: null }));
-watch(() => graph, () => { chosenSource = null; chosenTarget = null; chosenRoute = null; });
-function toggleChosenSource(id: VertexOf<typeof graph>) {
-  chosenSource = chosenSource === id ? null : id;
-}
-function toggleChosenTarget(id: VertexOf<typeof graph>) {
-  chosenTarget = chosenTarget === id ? null : id;
-}
-function toggleChosenRoute(id: EdgeOf<typeof graph>) {
-  chosenRoute = chosenRoute === id ? null : id;
-}
 
 // 此处必须为shallowRef，否则region会被递归转换，导致判等失效。
 let focusedRegion = $shallowRef<{region: data.Region, pos: [number, number]} | null>(null);
@@ -142,50 +90,7 @@ watch($$(focusedRegion), focus => {
             </template>
           </g>
         </g>
-        <g class="lines">
-          <path v-if="chosenRoute" class="route-highlight"
-            :d="lineGenerator([chosenRoute.source.data.geo, chosenRoute.target.data.geo])!"
-            :stroke-width="(lineWidthScale(routeDegree(chosenRoute)) + 5) / transform.k"
-          />
-          <template v-for="edge in graph.outOrderEdges()" :key="edge">
-            <path class="route"
-              :class="{ chosen: edge === chosenRoute }"
-              @click.stop="toggleChosenRoute(edge)"
-              :d="lineGenerator([edge.source.data.geo, edge.target.data.geo])!"
-              :stroke-width="lineWidthScale(routeDegree(edge)) / transform.k"
-              :stroke="lineColorScale(routeShiftApprox(edge))"
-              @mouseover.stop="hoveredRoute = edge"
-              @mouseout.stop="hoveredRoute = null"
-            />
-          </template>
-        </g>
-        <g class="nodes">
-          <template v-for="vertex in reorderedStations()" :key="vertex">
-            <g class="station" :class="{ hovered: hoveredStation === vertex }"
-              :transform="geoToTranslation(vertex.data.geo)"
-              @mouseover.stop="hoveredStation = vertex"
-              @mouseout.stop="hoveredStation = null"
-            >
-              <rect class="station-text-bg"
-                :x="nodeRadiusScale(stationDegree(vertex)) / transform.k" :y="-10 / transform.k"
-                :width="50 / transform.k" :height="20 / transform.k"
-                :rx="5 / transform.k" :ry="5 / transform.k"
-              />
-              <circle class="station-point"
-                :class="{ 'chosen-src': vertex === chosenSource, 'chosen-dst': vertex === chosenTarget }"
-                @click.prevent.stop="toggleChosenSource(vertex)"
-                @contextmenu.prevent.stop="toggleChosenTarget(vertex)"
-                :stroke-width="2 / transform.k"
-                :r="nodeRadiusScale(stationDegree(vertex)) / transform.k" 
-                :fill="nodeColorScale(vertex.data.access)"
-              />
-              <text cursor="pointer" text-anchor="middle"
-                :x="(25 + nodeRadiusScale(stationDegree(vertex))) / transform.k" :y="3.5 / transform.k"
-                :font-size="`${12 / transform.k}px`" 
-              >{{ vertex.data.name }}</text>
-            </g>
-          </template>
-        </g>
+        <slot :transform="transform" :projection="projection"/>
       </g>
     </svg>
   </div>
@@ -220,37 +125,5 @@ svg {
 .precise-border.focused {
   fill: rgba(0, 0, 0, 0.2);
   transition: fill 250ms; /* d3的默认duration */
-}
-
-.station-text-bg {
-  fill: white;
-  opacity: 0.7;
-}
-
-.station.hovered > .station-text-bg {
-  opacity: 1;
-}
-
-.station-point {
-  stroke: white;
-}
-
-.station-point.chosen-src {
-  stroke: red;
-}
-
-.station-point.chosen-dst {
-  stroke: yellow;
-}
-
-.route {
-  fill: none;
-  opacity: 0.7;
-}
-
-.route-highlight {
-  fill: none;
-  stroke: yellow;
-  opacity: 1;
 }
 </style>
