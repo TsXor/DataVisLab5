@@ -64,8 +64,11 @@ const lineGenerator = d3.line()
 
 // 此处必须为shallowRef，否则vertex会被递归转换，导致判等失效。
 let hoveredStation = $shallowRef<VertexOf<typeof graph> | null>(null);
-watch(() => graph, () => { hoveredStation = null; });
+let hoveredRoute = $shallowRef<EdgeOf<typeof graph> | null>(null);
+watch(() => graph, () => { hoveredStation = null; hoveredRoute = null; });
 function* reorderedStations() {
+  // 如果hoveredStation不为空，此函数会将其置于最后。
+  // 这是因为svg没有z-index属性，最后渲染的在最上方。
   for (const vertex of graph.vertices.values()) { if (vertex !== hoveredStation) yield vertex; }
   if (hoveredStation) yield hoveredStation;
 }
@@ -140,6 +143,10 @@ watch($$(focusedRegion), focus => {
           </g>
         </g>
         <g class="lines">
+          <path v-if="chosenRoute" class="route-highlight"
+            :d="lineGenerator([chosenRoute.source.data.geo, chosenRoute.target.data.geo])!"
+            :stroke-width="(lineWidthScale(routeDegree(chosenRoute)) + 5) / transform.k"
+          />
           <template v-for="edge in graph.outOrderEdges()" :key="edge">
             <path class="route"
               :class="{ chosen: edge === chosenRoute }"
@@ -147,6 +154,8 @@ watch($$(focusedRegion), focus => {
               :d="lineGenerator([edge.source.data.geo, edge.target.data.geo])!"
               :stroke-width="lineWidthScale(routeDegree(edge)) / transform.k"
               :stroke="lineColorScale(routeShiftApprox(edge))"
+              @mouseover.stop="hoveredRoute = edge"
+              @mouseout.stop="hoveredRoute = null"
             />
           </template>
         </g>
@@ -154,7 +163,8 @@ watch($$(focusedRegion), focus => {
           <template v-for="vertex in reorderedStations()" :key="vertex">
             <g class="station" :class="{ hovered: hoveredStation === vertex }"
               :transform="geoToTranslation(vertex.data.geo)"
-              @mouseover="hoveredStation = vertex"
+              @mouseover.stop="hoveredStation = vertex"
+              @mouseout.stop="hoveredStation = null"
             >
               <rect class="station-text-bg"
                 :x="nodeRadiusScale(stationDegree(vertex)) / transform.k" :y="-10 / transform.k"
@@ -238,7 +248,9 @@ svg {
   opacity: 0.7;
 }
 
-.route.chosen {
+.route-highlight {
+  fill: none;
+  stroke: yellow;
   opacity: 1;
 }
 </style>
