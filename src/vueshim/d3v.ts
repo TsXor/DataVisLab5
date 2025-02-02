@@ -99,4 +99,40 @@ export function useZoomTransform<ZoomRefElement extends d3.ZoomedElementBaseType
   return readonly(transformState);
 }
 
+export type DragConfigOptions = {
+  clickDistance?: number;
+};
+
+export type DragEventListener<GElement extends d3.DraggedElementBaseType, Datum, Subject> =
+  (this: GElement, event: d3.D3DragEvent<GElement, Datum, Subject>, d: Datum) => void;
+
+export class Drag<GElement extends d3.DraggedElementBaseType, Datum, Subject = Datum | d3.SubjectPosition> {
+  selection: ReadonlyNullableRef<Selection<GElement, Datum>>;
+  config: d3.DragBehavior<GElement, Datum, Subject>;
+
+  /**
+   * 你知道我要说什么。
+   * @param selection 选中元素的引用
+   * @param options 创建设置
+   */
+    constructor(selection: ReadonlyNullableRef<Selection<GElement, Datum>>, options?: DragConfigOptions) {
+      this.selection = selection;
+      this.config = d3.drag<GElement, Datum, Subject>();
+      if (options) this.update(options);
+      watch(this.selection, selection => selection?.call(this.config), { immediate: true });
+    }
+
+    update(options: DragConfigOptions): this {
+      if (options.clickDistance) this.config.clickDistance(options.clickDistance);
+      return this;
+    }
+
+    on(typenames: string): DragEventListener<GElement, Datum, Subject> | undefined;
+    on(typenames: string, listener: null): this;
+    on(typenames: string, listener: DragEventListener<GElement, Datum, Subject>): this;
+    on(...args: any[]): any {
+      let ret = this.config.on.apply(this.config, args as any);
+      return ret === this.config ? this : ret;
+    }
+};
 } // export namespace d3v

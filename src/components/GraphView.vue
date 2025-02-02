@@ -3,11 +3,12 @@ import * as d3 from 'd3';
 import { watch, type PropType } from 'vue';
 import type { EdgeOf, VertexOf } from '@/core/graph/graph';
 import { type TrainGraph, stationDegree, routeDegree, routeShiftApprox } from '@/core/data-adapter';
-
+import ColorLegend from './ColorLegend.vue';
+import WidthLegend from './WidthLegend.vue';
 
 const { transform, projection, graph } = defineProps({
   transform: { type: Object as PropType<d3.ZoomTransform>, required: true },
-  projection: { type: Object as PropType<d3.GeoProjection>, required: true },
+  projection: { type: Function as PropType<d3.GeoProjection>, required: true },
   graph: { type: Object as PropType<TrainGraph>, required: true },
 });
 
@@ -65,49 +66,101 @@ function toggleChosenRoute(id: EdgeOf<typeof graph>) {
 </script>
 
 <template>
-  <g class="lines">
-    <path v-if="chosenRoute" class="route-highlight"
-      :d="lineGenerator([chosenRoute.source.data.geo, chosenRoute.target.data.geo])!"
-      :stroke-width="(lineWidthScale(routeDegree(chosenRoute)) + 5) / transform.k"
-    />
-    <template v-for="edge in graph.outOrderEdges()" :key="edge">
-      <path class="route"
-        :class="{ chosen: edge === chosenRoute }"
-        @click.stop="toggleChosenRoute(edge)"
-        :d="lineGenerator([edge.source.data.geo, edge.target.data.geo])!"
-        :stroke-width="lineWidthScale(routeDegree(edge)) / transform.k"
-        :stroke="lineColorScale(routeShiftApprox(edge))"
-        @mouseover.stop="hoveredRoute = edge"
-        @mouseout.stop="hoveredRoute = null"
+  <g :transform="transform.toString()">
+    <g class="lines">
+      <path v-if="chosenRoute" class="route-highlight"
+        :d="lineGenerator([chosenRoute.source.data.geo, chosenRoute.target.data.geo])!"
+        :stroke-width="(lineWidthScale(routeDegree(chosenRoute)) + 5) / transform.k"
       />
-    </template>
+      <template v-for="edge in graph.outOrderEdges()" :key="edge">
+        <path class="route"
+          :class="{ chosen: edge === chosenRoute }"
+          @click.stop="toggleChosenRoute(edge)"
+          :d="lineGenerator([edge.source.data.geo, edge.target.data.geo])!"
+          :stroke-width="lineWidthScale(routeDegree(edge)) / transform.k"
+          :stroke="lineColorScale(routeShiftApprox(edge))"
+          @mouseover.stop="hoveredRoute = edge"
+          @mouseout.stop="hoveredRoute = null"
+        />
+      </template>
+    </g>
+    <g class="nodes">
+      <template v-for="vertex in reorderedStations()" :key="vertex">
+        <g class="station" :class="{ hovered: hoveredStation === vertex }"
+          :transform="geoToTranslation(vertex.data.geo)"
+          @mouseover.stop="hoveredStation = vertex"
+          @mouseout.stop="hoveredStation = null"
+        >
+          <rect class="station-text-bg"
+            :x="nodeRadiusScale(stationDegree(vertex)) / transform.k" :y="-10 / transform.k"
+            :width="50 / transform.k" :height="20 / transform.k"
+            :rx="5 / transform.k" :ry="5 / transform.k"
+          />
+          <circle class="station-point"
+            :class="{ 'chosen-src': vertex === chosenSource, 'chosen-dst': vertex === chosenTarget }"
+            @click.prevent.stop="toggleChosenSource(vertex)"
+            @contextmenu.prevent.stop="toggleChosenTarget(vertex)"
+            :stroke-width="2 / transform.k"
+            :r="nodeRadiusScale(stationDegree(vertex)) / transform.k" 
+            :fill="nodeColorScale(vertex.data.access)"
+          />
+          <text cursor="pointer" text-anchor="middle"
+            :x="(25 + nodeRadiusScale(stationDegree(vertex))) / transform.k" :y="3.5 / transform.k"
+            :font-size="`${12 / transform.k}px`" 
+          >{{ vertex.data.name }}</text>
+        </g>
+      </template>
+    </g>
   </g>
-  <g class="nodes">
-    <template v-for="vertex in reorderedStations()" :key="vertex">
-      <g class="station" :class="{ hovered: hoveredStation === vertex }"
-        :transform="geoToTranslation(vertex.data.geo)"
-        @mouseover.stop="hoveredStation = vertex"
-        @mouseout.stop="hoveredStation = null"
-      >
-        <rect class="station-text-bg"
-          :x="nodeRadiusScale(stationDegree(vertex)) / transform.k" :y="-10 / transform.k"
-          :width="50 / transform.k" :height="20 / transform.k"
-          :rx="5 / transform.k" :ry="5 / transform.k"
-        />
-        <circle class="station-point"
-          :class="{ 'chosen-src': vertex === chosenSource, 'chosen-dst': vertex === chosenTarget }"
-          @click.prevent.stop="toggleChosenSource(vertex)"
-          @contextmenu.prevent.stop="toggleChosenTarget(vertex)"
-          :stroke-width="2 / transform.k"
-          :r="nodeRadiusScale(stationDegree(vertex)) / transform.k" 
-          :fill="nodeColorScale(vertex.data.access)"
-        />
-        <text cursor="pointer" text-anchor="middle"
-          :x="(25 + nodeRadiusScale(stationDegree(vertex))) / transform.k" :y="3.5 / transform.k"
-          :font-size="`${12 / transform.k}px`" 
-        >{{ vertex.data.name }}</text>
-      </g>
-    </template>
+  <g class="legends">
+    <ColorLegend :scaler="nodeColorScale"
+      transform="translate(20, 20)"
+      :icon-width="20" :icon-height="15"
+      caption="节点颜色：年均到达人数（单位：万人）"
+    >
+      <template #icon-left="{ color }">
+        <circle cx="10" cy="7.5" r="7" :fill="color"/>
+      </template>
+      <template #icon-right="{ color }">
+        <circle cx="10" cy="7.5" r="7" :fill="color"/>
+      </template>
+    </ColorLegend>
+    <ColorLegend :scaler="lineColorScale"
+      transform="translate(20, 80)"
+      :icon-width="20" :icon-height="15"
+      caption="边颜色：年均客流量（单位：万人）"
+    >
+      <template #icon-left="{ color }">
+        <line x1="4.5" y1="13" x2="15.5" y2="2" stroke-width="2" :stroke="color"/>
+      </template>
+      <template #icon-right="{ color }">
+        <line x1="4.5" y1="13" x2="15.5" y2="2" stroke-width="2" :stroke="color"/>
+      </template>
+    </ColorLegend>
+    <WidthLegend :scaler="nodeRadiusScale"
+      transform="translate(20, 140)"
+      :icon-width="20" :icon-height="15"
+      caption="节点宽度：节点的度"
+    >
+      <template #icon-left="{ size }">
+        <circle cx="10" cy="7.5" fill="#ffd" stroke="#000" :r="size / 2"/>
+      </template>
+      <template #icon-right="{ size }">
+        <circle cx="10" cy="7.5" fill="#ffd" stroke="#000" :r="size / 2"/>
+      </template>
+    </WidthLegend>
+    <WidthLegend :scaler="lineWidthScale"
+      transform="translate(20, 200)"
+      :icon-width="20" :icon-height="15"
+      caption="边宽度：边的度（两端节点的平均度数）"
+    >
+      <template #icon-left="{ size }">
+        <line x1="4.5" y1="13" x2="15.5" y2="2" stroke="black" :stroke-width="size"/>
+      </template>
+      <template #icon-right="{ size }">
+        <line x1="4.5" y1="13" x2="15.5" y2="2" stroke="black" :stroke-width="size"/>
+      </template>
+    </WidthLegend>
   </g>
 </template>
 

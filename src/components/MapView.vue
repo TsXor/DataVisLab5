@@ -90,8 +90,8 @@ watch($$(focusedRegion), focus => {
             </template>
           </g>
         </g>
-        <slot :transform="transform" :projection="projection"/>
       </g>
+      <slot :transform="transform" :projection="projection"/>
     </svg>
   </div>
 </template>

@@ -15,3 +15,9 @@ export type Pair<T> = [T, T];
 
 export type ReadonlyRef<T> = Readonly<Ref<T>>;
 export type ReadonlyNullableRef<T> = Readonly<Ref<T | null>>;
+
+export type Point = [number, number];
+export type Points = Point[];
+export function svgPoints(points: Points) {
+  return points.map(([x, y]) => `${x},${y}`).join(' ');
+}
