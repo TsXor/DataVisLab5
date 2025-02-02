@@ -77,7 +77,9 @@ watch($$(focusedRegion), focus => {
           <!-- counties -->
           <g :stroke-width="0.5 / transform.k">
             <template v-for="feat in map.counties.features">
-              <path class="precise-border" :d="geoPath(feat)!"><title :text="feat.properties.name"/></path>
+              <path class="precise-border" :d="geoPath(feat)!">
+                <title :text="feat.properties.name"/>
+              </path>
             </template>
           </g>
           <!-- provinces -->
@@ -85,8 +87,9 @@ watch($$(focusedRegion), focus => {
             <template v-for="feat in map.provinces.features">
               <path class="precise-border" :d="geoPath(feat)!"
                 :class="{ focused: focusedRegion?.region === feat }"
-                @click.stop="event => toggleFocusedRegion(event, feat)"
-              ><title :text="feat.properties.name"/></path>
+                @click.stop="event => toggleFocusedRegion(event, feat)">
+                <title :text="feat.properties.name"/>
+              </path>
             </template>
           </g>
         </g>

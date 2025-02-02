@@ -89,8 +89,7 @@ function toggleChosenRoute(id: EdgeOf<typeof graph>) {
         <g class="station" :class="{ hovered: hoveredStation === vertex }"
           :transform="geoToTranslation(vertex.data.geo)"
           @mouseover.stop="hoveredStation = vertex"
-          @mouseout.stop="hoveredStation = null"
-        >
+          @mouseout.stop="hoveredStation = null">
           <rect class="station-text-bg"
             :x="nodeRadiusScale(stationDegree(vertex)) / transform.k" :y="-10 / transform.k"
             :width="50 / transform.k" :height="20 / transform.k"
@@ -106,8 +105,7 @@ function toggleChosenRoute(id: EdgeOf<typeof graph>) {
           />
           <text cursor="pointer" text-anchor="middle"
             :x="(25 + nodeRadiusScale(stationDegree(vertex))) / transform.k" :y="3.5 / transform.k"
-            :font-size="`${12 / transform.k}px`" 
-          >{{ vertex.data.name }}</text>
+            :font-size="`${12 / transform.k}px`" v-text="vertex.data.name"/>
         </g>
       </template>
     </g>
@@ -116,8 +114,7 @@ function toggleChosenRoute(id: EdgeOf<typeof graph>) {
     <ColorLegend :scaler="nodeColorScale"
       transform="translate(20, 20)"
       :icon-width="20" :icon-height="15"
-      caption="节点颜色：年均到达人数（单位：万人）"
-    >
+      caption="节点颜色：年均到达人数（单位：万人）">
       <template #icon-left="{ color }">
         <circle cx="10" cy="7.5" r="7" :fill="color"/>
       </template>
@@ -128,8 +125,7 @@ function toggleChosenRoute(id: EdgeOf<typeof graph>) {
     <ColorLegend :scaler="lineColorScale"
       transform="translate(20, 80)"
       :icon-width="20" :icon-height="15"
-      caption="边颜色：年均客流量（单位：万人）"
-    >
+      caption="边颜色：年均客流量（单位：万人）">
       <template #icon-left="{ color }">
         <line x1="4.5" y1="13" x2="15.5" y2="2" stroke-width="2" :stroke="color"/>
       </template>
@@ -140,8 +136,7 @@ function toggleChosenRoute(id: EdgeOf<typeof graph>) {
     <WidthLegend :scaler="nodeRadiusScale"
       transform="translate(20, 140)"
       :icon-width="20" :icon-height="15"
-      caption="节点宽度：节点的度"
-    >
+      caption="节点宽度：节点的度">
       <template #icon-left="{ size }">
         <circle cx="10" cy="7.5" fill="#ffd" stroke="#000" :r="size / 2"/>
       </template>
@@ -152,8 +147,7 @@ function toggleChosenRoute(id: EdgeOf<typeof graph>) {
     <WidthLegend :scaler="lineWidthScale"
       transform="translate(20, 200)"
       :icon-width="20" :icon-height="15"
-      caption="边宽度：边的度（两端节点的平均度数）"
-    >
+      caption="边宽度：边的度（两端节点的平均度数）">
       <template #icon-left="{ size }">
         <line x1="4.5" y1="13" x2="15.5" y2="2" stroke="black" :stroke-width="size"/>
       </template>

@@ -67,7 +67,7 @@ rightDrag.on('drag', event => { filterMax = clamp(axisScale.invert(rightX + even
         </g>
       </g>
     </g>
-    <text class="caption" x="0" y="0">{{ caption }}</text>
+    <text class="caption" x="0" y="0" v-text="caption"/>
   </g>
 </template>
 

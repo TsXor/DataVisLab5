@@ -16,14 +16,14 @@ let floatingWidth = $ref(visualViewport!.width * 40 / 100);
   <BaseSwitch v-model="choice" class="switch-container">
     <template #choice="{vnode, chosen}">
       <!-- 选项按钮 -->
-      <button class="tab-button" :class="{chosen: chosen}">{{ vnode.props!.name }}</button>
+      <button class="tab-button" :class="{chosen: chosen}" v-text="vnode.props!.name"/>
     </template>
     <template #item="{vnode}">
       <div style="position: relative; height: 100%">
         <!-- 第二层侧边栏 -->
         <div class="side-floating" :style="{ width: `${floatingWidth}px` }">
           <div class="info-container">
-            <h2 class="info-title">{{ vnode.props!.name }}</h2>
+            <h2 class="info-title" v-text="vnode.props!.name"/>
             <div class="info-content"><UseVNode :vnode="vnode"/></div>
           </div>
           <!-- 拖拽控件 -->

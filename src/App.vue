@@ -22,8 +22,7 @@ import resIconHeatmap from '@/assets/img/heatmap.png'
     <div name="参数"><div v-html="resInfoParam"/></div>
   </InfoPanel>
   <DataSuspense id="map-view" v-slot="{ graph, map }"
-    :map="collectMapData()" :graph="collectTrainGraph()"
-  >
+    :map="collectMapData()" :graph="collectTrainGraph()">
     <MapView :map="map" v-slot="{ transform, projection }">
       <GraphView :graph="graph" :transform="transform" :projection="projection"/>
     </MapView>
