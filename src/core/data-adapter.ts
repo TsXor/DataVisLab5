@@ -13,7 +13,9 @@ type MapDataFailure = {
   counties?: number[];
 };
 
-export async function collectMapData(): Promise<Result<render.MapData, MapDataFailure>> {
+export type MapDataResult = Result<render.MapData, MapDataFailure>;
+
+export async function collectMapData(): Promise<MapDataResult> {
   let success = true;
   const failure: MapDataFailure = { provinces: false, countieIds: false };
   const [ provinces, countieIds ] = await Promise.all([
@@ -41,7 +43,9 @@ type TrainGraphFailure = {
   routes: boolean;
 };
 
-export async function collectTrainGraph(): Promise<Result<TrainGraph, TrainGraphFailure>> {
+export type TrainGraphResult = Result<TrainGraph, TrainGraphFailure>;
+
+export async function collectTrainGraph(): Promise<TrainGraphResult> {
   let success = true;
   const failure: TrainGraphFailure = { stations: false, routes: false };
   const [ stations, routes ] = await Promise.all([

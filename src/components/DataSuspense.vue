@@ -1,27 +1,36 @@
 <script setup lang="ts">
-import { inject, watch } from 'vue';
+import { watch, type PropType } from 'vue';
 import { useAsyncState } from '@vueuse/core';
-import { graphKey } from '@/main';
 import { asSuccess } from '@/core/utils';
-import { collectMapData, collectTrainGraph, type TrainGraph } from '@/core/data-adapter';
+import { type MapDataResult, type TrainGraph, type TrainGraphResult } from '@/core/data-adapter';
 import type { render } from '@/core/dtypes';
 
 defineSlots<{
   default(props: { graph: TrainGraph; map: render.MapData }): any
 }>();
 
-const mapAsync = useAsyncState(collectMapData(), null);
-const graphAsync = useAsyncState(collectTrainGraph(), null);
-
-const graph = inject(graphKey)!;
-watch(graphAsync.state, result => {
-  if (result?.success) graph.value = result.data;
+const { map, graph } = defineProps({
+  map: { type: Promise as PropType<Promise<MapDataResult>>, required: true },
+  graph: { type: Promise as PropType<Promise<TrainGraphResult>>, required: true },
 });
+
+const emit = defineEmits<{
+  ready: [data: { graph: TrainGraph, map: render.MapData }];
+}>();
+
+const mapAsync = useAsyncState(map, null);
+const graphAsync = useAsyncState(graph, null);
 
 const isReady = $computed(() =>
   graphAsync.isReady.value && mapAsync.isReady.value &&
   graphAsync.state.value!.success && mapAsync.state.value!.success
 );
+watch(isReady, ready => {
+  if (ready) emit('ready', {
+    graph: asSuccess(graphAsync.state.value!),
+    map: asSuccess(mapAsync.state.value!),
+  });
+});
 </script>
 
 <template>
