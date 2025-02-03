@@ -25,7 +25,7 @@ const isReady = $computed(() =>
   graphAsync.isReady.value && mapAsync.isReady.value &&
   graphAsync.state.value!.success && mapAsync.state.value!.success
 );
-watch(isReady, ready => {
+watch($$(isReady), ready => {
   if (ready) emit('ready', {
     graph: asSuccess(graphAsync.state.value!),
     map: asSuccess(mapAsync.state.value!),
