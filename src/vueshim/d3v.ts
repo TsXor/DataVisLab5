@@ -59,6 +59,12 @@ export type RenderBinding = DirectiveBinding<
   never
 >;
 
+export type RaiseBinding = DirectiveBinding<
+  boolean,
+  never,
+  never
+>;
+
 export class Zoom implements ElementBound {
   el: ShallowRef<Element | null>;
   config: ZoomBehavior;
@@ -151,4 +157,12 @@ export function vD3Bind(el: Element, binding: v.BindBinding): void {
 export function vD3Render(el: Element, binding: v.RenderBinding): void {
   const renderer = binding.value;
   renderer(d3.select(el));
+}
+
+/**
+ * [自定义指令](https://cn.vuejs.org/guide/reusability/custom-directives)。
+ * 当输入的布尔值为真时，将指定元素重新插入。
+ */
+export function vD3Raise(el: Element, binding: v.RaiseBinding): void {
+  if (binding.value) d3.select(el).raise();
 }

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import * as d3 from 'd3';
 import { watch, type PropType } from 'vue';
+import { vD3Raise } from '@/vueshim/d3v';
 import type { EdgeOf, VertexOf } from '@/core/graph/graph';
 import { type TrainGraph, stationDegree, routeDegree, routeShiftApprox } from '@/core/data-adapter';
 import ColorLegend from './ColorLegend.vue';
@@ -39,30 +40,26 @@ const lineColorScale = d3.scaleLinear<string>()
   .domain([10000, 160000])
   .range(["steelblue", "tomato"]);
 
-// 此处必须为shallowRef，否则vertex会被递归转换，导致判等失效。
-let hoveredStation = $shallowRef<VertexOf<typeof graph> | null>(null);
-let hoveredRoute = $shallowRef<EdgeOf<typeof graph> | null>(null);
-watch(() => graph, () => { hoveredStation = null; hoveredRoute = null; });
-function* reorderedStations() {
-  // 如果hoveredStation不为空，此函数会将其置于最后。
-  // 这是因为svg没有z-index属性，最后渲染的在最上方。
-  for (const vertex of graph.vertices.values()) { if (vertex !== hoveredStation) yield vertex; }
-  if (hoveredStation) yield hoveredStation;
-}
+type GVertex = VertexOf<typeof graph>;
+type GEdge = EdgeOf<typeof graph>;
 
-let chosenSource = $(defineModel<VertexOf<typeof graph> | null>('chosenSource', { default: null }));
-let chosenTarget = $(defineModel<VertexOf<typeof graph> | null>('chosenTarget', { default: null }));
-let chosenRoute = $(defineModel<EdgeOf<typeof graph> | null>('chosenRoute', { default: null }));
+// 此处必须为shallowRef，否则vertex会被递归转换，导致判等失效。
+let hoveredStation = $shallowRef<GVertex | null>(null);
+let hoveredRoute = $shallowRef<GEdge | null>(null);
+watch(() => graph, () => { hoveredStation = null; hoveredRoute = null; });
+function isHoveredStation(station: GVertex) { return station === hoveredStation; }
+function isHoveredRoute(route: GEdge) { return route === hoveredRoute; }
+
+let chosenSource = $(defineModel<GVertex | null>('chosenSource', { default: null }));
+let chosenTarget = $(defineModel<GVertex | null>('chosenTarget', { default: null }));
+let chosenRoute = $(defineModel<GEdge | null>('chosenRoute', { default: null }));
 watch(() => graph, () => { chosenSource = null; chosenTarget = null; chosenRoute = null; });
-function toggleChosenSource(id: VertexOf<typeof graph>) {
-  chosenSource = chosenSource === id ? null : id;
-}
-function toggleChosenTarget(id: VertexOf<typeof graph>) {
-  chosenTarget = chosenTarget === id ? null : id;
-}
-function toggleChosenRoute(id: EdgeOf<typeof graph>) {
-  chosenRoute = chosenRoute === id ? null : id;
-}
+function isChosenSource(station: GVertex) { return station === chosenSource; }
+function isChosenTarget(station: GVertex) { return station === chosenTarget; }
+function isChosenRoute(route: GEdge) { return route === chosenRoute; }
+function toggleChosenSource(id: GVertex) { chosenSource = chosenSource === id ? null : id; }
+function toggleChosenTarget(id: GVertex) { chosenTarget = chosenTarget === id ? null : id; }
+function toggleChosenRoute(id: GEdge) { chosenRoute = chosenRoute === id ? null : id; }
 </script>
 
 <template>
@@ -74,7 +71,11 @@ function toggleChosenRoute(id: EdgeOf<typeof graph>) {
       />
       <template v-for="edge in graph.outOrderEdges()" :key="edge">
         <path class="route"
-          :class="{ chosen: edge === chosenRoute }"
+          :class="{
+            hovered: isHoveredRoute(edge),
+            chosen: isChosenRoute(edge),
+          }"
+          v-d3-raise="isHoveredRoute(edge)"
           @click.stop="toggleChosenRoute(edge)"
           :d="lineGenerator([edge.source.data.geo, edge.target.data.geo])!"
           :stroke-width="lineWidthScale(routeDegree(edge)) / transform.k"
@@ -85,8 +86,14 @@ function toggleChosenRoute(id: EdgeOf<typeof graph>) {
       </template>
     </g>
     <g class="nodes">
-      <template v-for="vertex in reorderedStations()" :key="vertex">
-        <g class="station" :class="{ hovered: hoveredStation === vertex }"
+      <template v-for="vertex in graph.vertices.values()" :key="vertex">
+        <g class="station"
+          :class="{
+            hovered: isHoveredStation(vertex),
+            'chosen-src': isChosenSource(vertex),
+            'chosen-dst': isChosenTarget(vertex),
+          }"
+          v-d3-raise="isHoveredStation(vertex)"
           :transform="geoToTranslation(vertex.data.geo)"
           @mouseover.stop="hoveredStation = vertex"
           @mouseout.stop="hoveredStation = null">
@@ -96,14 +103,14 @@ function toggleChosenRoute(id: EdgeOf<typeof graph>) {
             :rx="5 / transform.k" :ry="5 / transform.k"
           />
           <circle class="station-point"
-            :class="{ 'chosen-src': vertex === chosenSource, 'chosen-dst': vertex === chosenTarget }"
             @click.prevent.stop="toggleChosenSource(vertex)"
             @contextmenu.prevent.stop="toggleChosenTarget(vertex)"
             :stroke-width="2 / transform.k"
             :r="nodeRadiusScale(stationDegree(vertex)) / transform.k" 
             :fill="nodeColorScale(vertex.data.access)"
           />
-          <text cursor="pointer" text-anchor="middle"
+          <text class="station-text"
+            cursor="pointer" text-anchor="middle"
             :x="(25 + nodeRadiusScale(stationDegree(vertex))) / transform.k" :y="3.5 / transform.k"
             :font-size="`${12 / transform.k}px`" v-text="vertex.data.name"/>
         </g>
@@ -172,11 +179,11 @@ function toggleChosenRoute(id: EdgeOf<typeof graph>) {
   stroke: white;
 }
 
-.station-point.chosen-src {
+.station.chosen-src > .station-point {
   stroke: red;
 }
 
-.station-point.chosen-dst {
+.station.chosen-dst > .station-point {
   stroke: yellow;
 }
 
