@@ -1,138 +1,154 @@
 import * as d3 from 'd3';
-import { computed, readonly, ref, watch } from 'vue';
-import { type ReadonlyNullableRef, type ReadonlyRef } from './utils'
+import { readonly, shallowRef, watch, type DirectiveBinding, type ShallowRef } from 'vue';
+import { type ReadonlyShallowRef, type WritableRef } from './utils'
 
-export namespace d3v {
-
-/**
- * 是`d3.Selection`的别名，但指定了默认类型参数。
- */
-export type Selection<
-  GElement extends d3.BaseType, Datum = unknown,
-  PElement extends d3.BaseType = any, PDatum = unknown
-> = d3.Selection<GElement, Datum, PElement, PDatum>;
+export namespace v {
 
 /**
- * 将元素引用转换成D3选择的引用
- * @param nodeRef 元素的引用，可以来自于`useTemplateRef`
- * @returns D3选择的引用
- */
-export function selectRef<GElement extends d3.BaseType, OldDatum>(nodeRef: ReadonlyNullableRef<GElement>) {
-  return computed(() => nodeRef.value ? d3.select<GElement, OldDatum>(nodeRef.value) : null);
+ * 是的，我放弃大部分泛型了。
+ * 因为d3的泛型参数中，GElement并没有什么卵用，反正attr之类的也没有类型提示。
+ * 而Datum也并不需要了，所以直接undefined。
+ */;
+
+export type Consumer<P, R> = (param: P) => R;
+export type Config<T> = Consumer<T, any>;
+
+export type Selection<E extends Element = Element> = d3.Selection<E, undefined, null, undefined>;
+export type Transition<E extends Element = Element> = d3.Transition<E, undefined, null, undefined>;
+export type ZoomBehavior = d3.ZoomBehavior<Element, undefined>;
+export type ZoomEvent = d3.D3ZoomEvent<Element, undefined>;
+export type ZoomEventListener = (this: Element, event: ZoomEvent) => void;
+export type DragBehavior = d3.DragBehavior<Element, undefined, d3.SubjectPosition | undefined>;
+export type DragEvent = d3.D3DragEvent<Element, undefined, d3.SubjectPosition | undefined>;
+export type DragEventListener = (this: Element, event: DragEvent) => void;
+
+export function select(el: Element) {
+  return d3.select<Element, undefined>(el);
 }
 
-export type ZoomConfigOptions = {
-  scaleExtent?: [number, number];
-};
-
-export type ZoomTransformOptions = {
-  point?: [number, number];
-  transition?: {
-    duration?: number;
-    delay?: number;
+/**
+ * 修饰渲染函数，使其附带过渡。
+ * @param renderer 可接受`d3.Transition`的渲染函数
+ * @param config 回调，用于配置过渡参数
+ * @returns 修饰过的渲染函数
+ */
+export function withTransition<E extends Element, R>(
+  renderer: Consumer<Transition<E>, R>,
+  config?: Config<Transition<E>>
+): Consumer<Selection<E>, R> {
+  config ??= (t => t);
+  return selection => {
+    const transition = selection.transition(); config(transition);
+    return renderer(transition);
   };
+}
+
+interface ElementBound {
+  el: ShallowRef<Element | null>;
 };
 
-export type ZoomEventListener<ZoomRefElement extends d3.ZoomedElementBaseType, Datum> =
-  (this: ZoomRefElement, event: d3.D3ZoomEvent<ZoomRefElement, Datum>, d: Datum) => void;
+export type BindBinding = DirectiveBinding<
+  ElementBound | ElementBound[],
+  never,
+  never
+>;
 
-export class Zoom<ZoomRefElement extends d3.ZoomedElementBaseType, Datum> {
-  selection: ReadonlyNullableRef<Selection<ZoomRefElement, Datum>>;
-  config: d3.ZoomBehavior<ZoomRefElement, Datum>;
+export type RenderBinding = DirectiveBinding<
+  (selection: Selection<any>) => any,
+  never,
+  never
+>;
 
-  /**
-   * 我要用靴子狠狠踢D3的鼙鼓！
-   * @param selection 选中元素的引用
-   * @param options 创建设置
-   */
-  constructor(selection: ReadonlyNullableRef<Selection<ZoomRefElement, Datum>>, options?: ZoomConfigOptions) {
-    this.selection = selection;
-    this.config = d3.zoom<ZoomRefElement, Datum>();
-    if (options) this.update(options);
-    watch(this.selection, selection => selection?.call(this.config), { immediate: true });
+export class Zoom implements ElementBound {
+  el: ShallowRef<Element | null>;
+  config: ZoomBehavior;
+
+  constructor(options?: Config<ZoomBehavior>) {
+    this.el = shallowRef(null);
+    this.config = d3.zoom<Element, undefined>();
+    if (options) options(this.config);
+    watch(this.el, el => { if (el) select(el).call(this.config); }, { immediate: true });
   }
 
-  update(options: ZoomConfigOptions): this {
-    if (options.scaleExtent) this.config.scaleExtent(options.scaleExtent);
-    return this;
-  }
-
-  transform(transform: d3.ZoomTransform, options?: ZoomTransformOptions): this {
-    if (!this.selection.value) return this;
-    options = options || {};
-    if (options.transition) {
-      let transition = this.selection.value.transition();
-      if (options.transition.duration)
-        transition.duration(options.transition.duration);
-      if (options.transition.delay)
-        transition.duration(options.transition.delay);
-      transition.call(this.config.transform, transform, options.point);
+  transform(transform: d3.ZoomTransform, point?: [number, number], transitionOptions?: Config<Transition>): this {
+    if (!this.el.value) return this;
+    const selection = select(this.el.value);
+    if (transitionOptions) {
+      const transition = selection.transition();
+      transitionOptions(transition);
+      transition.call(this.config.transform, transform, point);
     } else {
-      this.selection.value.call(this.config.transform, transform, options.point);
+      selection.call(this.config.transform, transform, point);
     }
     return this;
   }
 
-  on(typenames: string): ZoomEventListener<ZoomRefElement, Datum> | undefined;
+  on(typenames: string): ZoomEventListener | undefined;
   on(typenames: string, listener: null): this;
-  on(typenames: string, listener: ZoomEventListener<ZoomRefElement, Datum>): this;
+  on(typenames: string, listener: ZoomEventListener): this;
   on(...args: any[]): any {
     let ret = this.config.on.apply(this.config, args as any);
     return ret === this.config ? this : ret;
   }
+
+  useTransformState(name?: string): ReadonlyShallowRef<d3.ZoomTransform> {
+    name ??= '_state';
+    const transformState = shallowRef<d3.ZoomTransform>(d3.zoomIdentity);
+    this.on(`zoom.${name}`, event => transformState.value = event.transform);
+    watch(this.el, el => { transformState.value = el ? d3.zoomTransform(el) : d3.zoomIdentity; });
+    return readonly(transformState);
+  }
 };
+
+type PosRefOptions = { x?: WritableRef<number>, y?: WritableRef<number> };
+
+export class Drag implements ElementBound {
+  el: ShallowRef<Element | null>;
+  config: DragBehavior;
+
+  constructor(options?: Config<DragBehavior>) {
+    this.el = shallowRef(null);
+    this.config = d3.drag<Element, undefined>();
+    if (options) options(this.config);
+    watch(this.el, el => { if (el) select(el).call(this.config); }, { immediate: true });
+  }
+
+  on(typenames: string): DragEventListener | undefined;
+  on(typenames: string, listener: null): this;
+  on(typenames: string, listener: DragEventListener): this;
+  on(...args: any[]): any {
+    let ret = this.config.on.apply(this.config, args as any);
+    return ret === this.config ? this : ret;
+  }
+
+  attachPos(pos: PosRefOptions): this;
+  attachPos(name: string, pos: PosRefOptions): this;
+  attachPos(...args: [PosRefOptions] | [string, PosRefOptions]): this {
+    let [name, pos] = args.length === 2 ? args : ['_pos', ...args];
+    this.on(`drag.${name}`, event => {
+      if (pos.x) pos.x.value += event.dx;
+      if (pos.y) pos.y.value += event.dy;
+    });
+    return this;
+  }
+};
+
+} // export namespace v
 
 /**
- * 监听zoom事件，获取缩放变换状态
- * @param zoom `d3v.Zoom`对象
- * @param name 监听器的名称，不能重复
- * @returns 当前缩放变换状态的引用
+ * [自定义指令](https://cn.vuejs.org/guide/reusability/custom-directives)。
+ * 将输入的`d3`交互对象作用于指定元素上。 
  */
-export function useZoomTransform<ZoomRefElement extends d3.ZoomedElementBaseType, Datum>(
-  zoom: Zoom<ZoomRefElement, Datum>, name: string = '_state'
-): ReadonlyRef<d3.ZoomTransform> {
-  const transformState = ref<d3.ZoomTransform>(d3.zoomIdentity);
-  zoom.on(`zoom.${name}`, event => transformState.value = event.transform);
-  watch(zoom.selection, selection => {
-    transformState.value = selection ? d3.zoomTransform(selection.node()!) : d3.zoomIdentity;
-  });
-  return readonly(transformState);
+export function vD3Bind(el: Element, binding: v.BindBinding): void {
+  const receivers = binding.value instanceof Array ? binding.value : [binding.value];
+  receivers.map(receiver => receiver.el.value = el);
 }
 
-export type DragConfigOptions = {
-  clickDistance?: number;
-};
-
-export type DragEventListener<GElement extends d3.DraggedElementBaseType, Datum, Subject> =
-  (this: GElement, event: d3.D3DragEvent<GElement, Datum, Subject>, d: Datum) => void;
-
-export class Drag<GElement extends d3.DraggedElementBaseType, Datum, Subject = Datum | d3.SubjectPosition> {
-  selection: ReadonlyNullableRef<Selection<GElement, Datum>>;
-  config: d3.DragBehavior<GElement, Datum, Subject>;
-
-  /**
-   * 你知道我要说什么。
-   * @param selection 选中元素的引用
-   * @param options 创建设置
-   */
-    constructor(selection: ReadonlyNullableRef<Selection<GElement, Datum>>, options?: DragConfigOptions) {
-      this.selection = selection;
-      this.config = d3.drag<GElement, Datum, Subject>();
-      if (options) this.update(options);
-      watch(this.selection, selection => selection?.call(this.config), { immediate: true });
-    }
-
-    update(options: DragConfigOptions): this {
-      if (options.clickDistance) this.config.clickDistance(options.clickDistance);
-      return this;
-    }
-
-    on(typenames: string): DragEventListener<GElement, Datum, Subject> | undefined;
-    on(typenames: string, listener: null): this;
-    on(typenames: string, listener: DragEventListener<GElement, Datum, Subject>): this;
-    on(...args: any[]): any {
-      let ret = this.config.on.apply(this.config, args as any);
-      return ret === this.config ? this : ret;
-    }
-};
-} // export namespace d3v
+/**
+ * [自定义指令](https://cn.vuejs.org/guide/reusability/custom-directives)。
+ * 将输入的`d3`渲染函数作用于指定元素上。
+ */
+export function vD3Render(el: Element, binding: v.RenderBinding): void {
+  const renderer = binding.value;
+  renderer(d3.select(el));
+}

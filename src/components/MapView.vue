@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as d3 from 'd3';
-import { useTemplateRef, watch, type PropType } from 'vue';
-import { d3v } from '@/vueshim/d3v';
+import { watch, type PropType } from 'vue';
+import { v, vD3Bind } from '@/vueshim/d3v';
 import type { data, render } from '@/core/dtypes';
 
 defineSlots<{
@@ -20,10 +20,8 @@ const viewBox = $computed(() => {
   return `0 0 ${width} ${height}`;
 });
 
-const containerElement = useTemplateRef('container');
-const container = d3v.selectRef(containerElement);
-const zoom = new d3v.Zoom(container, { scaleExtent: [0.01, 8] });
-const transform = $(d3v.useZoomTransform(zoom));
+const zoom = new v.Zoom(z => z.scaleExtent([0.01, 8]));
+const transform = $(zoom.useTransformState());
 
 const projection = $computed(() => {
   const [width, height] = viewSize;
@@ -38,7 +36,7 @@ const geoPath = $computed(() => d3.geoPath(projection));
 // 此处必须为shallowRef，否则region会被递归转换，导致判等失效。
 let focusedRegion = $shallowRef<{region: data.Region, pos: [number, number]} | null>(null);
 function toggleFocusedRegion(event: MouseEvent, region: data.Region) {
-  focusedRegion = focusedRegion?.region === region ? null : { region, pos: d3.pointer(event, container.value!.node()!) };
+  focusedRegion = focusedRegion?.region === region ? null : { region, pos: d3.pointer(event, zoom.el.value!) };
 }
 // 在省份注意点转换时，执行缩放
 watch($$(focusedRegion), focus => {
@@ -52,12 +50,14 @@ watch($$(focusedRegion), focus => {
         .translate(width / 2, height / 2)
         .scale(Math.min(zoomLimit, zoomBase / Math.max((x1 - x0) / width, (y1 - y0) / height))) 
         .translate(-(x0 + x1) / 2, -(y0 + y1) / 2),
-      { point: focus.pos, transition: { duration: 750 } }
+      focus.pos,
+      t => t.duration(750),
     );
   } else { // 重置缩放
     zoom.transform(
       d3.zoomIdentity,
-      { point: transform!.invert([width / 2, height / 2]), transition: { duration: 750 } }
+      transform!.invert([width / 2, height / 2]),
+      t => t.duration(750),
     );
   }
 });
@@ -65,7 +65,7 @@ watch($$(focusedRegion), focus => {
 
 <template>
   <div class="aligner">
-    <svg ref="container" :viewBox="viewBox" @contextmenu.prevent>
+    <svg :viewBox="viewBox" @contextmenu.prevent v-d3-bind="zoom">
       <g :transform="transform.toString()" @click.stop="focusedRegion = null">
         <g class="map">
           <!-- provinces -->

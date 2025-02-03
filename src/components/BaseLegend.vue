@@ -1,7 +1,7 @@
 <script setup lang="ts" generic="Range">
 import * as d3 from 'd3';
-import { useTemplateRef, watch, type PropType } from 'vue';
-import { d3v } from '@/vueshim/d3v';
+import { watch, type PropType } from 'vue';
+import { v, vD3Bind, vD3Render } from '@/vueshim/d3v';
 import { clamp } from '@vueuse/core';
 import { svgPoints, type Point, type Points } from '@/vueshim/utils';
 
@@ -23,10 +23,6 @@ const { scaler, barWidth, chooserSize } = defineProps({
 
 const captionHeight = 10;
 const axisScale = $computed(() => d3.scaleLinear(scaler.domain(), [0, barWidth]));
-const axisRender = d3.axisBottom(axisScale).ticks(5);
-const axisElement = useTemplateRef('axis');
-const axis = d3v.selectRef(axisElement);
-watch(axis, selection => { if (selection) selection.call(axisRender); })
 
 const chooserPoints = [[0, 1], [0, -1], [-1, 0], [-1, 1]] as Points;
 const leftChooserPoints = $computed(() => chooserPoints.map(([x, y]) => [x * chooserSize, y * chooserSize] as Point));
@@ -36,16 +32,16 @@ let filterMin = $(defineModel<number>('filterMin', { default: NaN }));
 let filterMax = $(defineModel<number>('filterMax', { default: NaN }));
 watch(() => scaler, () => { const [min, max] = scaler.domain(); filterMin = min; filterMax = max; }, { immediate: true });
 
-const leftX = $computed(() => axisScale(filterMin!));
-const rightX = $computed(() => axisScale(filterMax!));
-const leftElement = useTemplateRef('left');
-const rightElement = useTemplateRef('right');
-const left = d3v.selectRef(leftElement);
-const right = d3v.selectRef(rightElement);
-const leftDrag = new d3v.Drag(left);
-const rightDrag = new d3v.Drag(right);
-leftDrag.on('drag', event => { filterMin = clamp(axisScale.invert(leftX + event.dx), scaler.domain()[0], filterMax); });
-rightDrag.on('drag', event => { filterMax = clamp(axisScale.invert(rightX + event.dx), filterMin, scaler.domain()[1]); });
+const leftX = $computed({
+  get: () => axisScale(filterMin!),
+  set: x => { filterMin = clamp(axisScale.invert(x), scaler.domain()[0], filterMax); }
+});
+const rightX = $computed({
+  get: () => axisScale(filterMax!),
+  set: x => { filterMax = clamp(axisScale.invert(x), filterMin, scaler.domain()[1]); }
+});
+const leftDrag = new v.Drag().attachPos({ x: $$(leftX) });
+const rightDrag = new v.Drag().attachPos({ x: $$(rightX) });
 </script>
 
 <template>
@@ -60,10 +56,12 @@ rightDrag.on('drag', event => { filterMax = clamp(axisScale.invert(rightX + even
       <g :transform="`translate(${iconWidth}, ${d3.max([(iconHeight - barHeight) / 2, 0])!})`">
         <slot name="bar" class="bar"/>
         <g :transform="`translate(0, ${barHeight})`">
-          <g ref="axis" class="axis"/>
+          <g class="axis" v-d3-render="d3.axisBottom(axisScale).ticks(5)"/>
           <line class="selected" :x1="leftX" :x2="rightX" y1="0" y2="0"/>
-          <polygon class="chooser" ref="left" :points="svgPoints(leftChooserPoints)" :transform="`translate(${leftX}, 0)`"/>
-          <polygon class="chooser" ref="right" :points="svgPoints(rightChooserPoints)" :transform="`translate(${rightX}, 0)`"/>
+          <polygon class="chooser" :points="svgPoints(leftChooserPoints)"
+            :transform="`translate(${leftX}, 0)`" v-d3-bind="leftDrag" />
+          <polygon class="chooser" :points="svgPoints(rightChooserPoints)"
+            :transform="`translate(${rightX}, 0)`" v-d3-bind="rightDrag"/>
         </g>
       </g>
     </g>
