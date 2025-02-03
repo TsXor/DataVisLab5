@@ -14,13 +14,14 @@ const { transform, projection, graph } = defineProps({
 });
 
 function geoToTranslation(geo: [number, number]) {
-  const [a, b] = projection(geo)!;
+  const [a, b] = transform.apply(projection(geo)!);
   return `translate(${a}, ${b})`;
 }
 
-const lineGenerator = d3.line()
-  .x(d => projection(d)![0])
-  .y(d => projection(d)![1]);
+const linear = d3.line();
+function projectedLine(points: [number, number][]) {
+  return linear(points.map(p => transform.apply(projection(p)!)));
+}
 
 // TODO: 根据数据范围动态决定下列比例尺。
 
@@ -63,58 +64,56 @@ function toggleChosenRoute(id: GEdge) { chosenRoute = chosenRoute === id ? null 
 </script>
 
 <template>
-  <g :transform="transform.toString()">
-    <g class="lines">
-      <path v-if="chosenRoute" class="route-highlight"
-        :d="lineGenerator([chosenRoute.source.data.geo, chosenRoute.target.data.geo])!"
-        :stroke-width="(lineWidthScale(routeDegree(chosenRoute)) + 5) / transform.k"
+  <g class="lines">
+    <path v-if="chosenRoute" class="route-highlight"
+      :d="projectedLine([chosenRoute.source.data.geo, chosenRoute.target.data.geo])!"
+      :stroke-width="(lineWidthScale(routeDegree(chosenRoute)) + 5)"
+    />
+    <g v-for="edge in graph.outOrderEdges()"
+      :stroke-width="lineWidthScale(routeDegree(edge))"
+      :stroke="lineColorScale(routeShiftApprox(edge))"
+      v-d3-raise="isHoveredRoute(edge)">
+      <path class="route"
+        :class="{
+          hovered: isHoveredRoute(edge),
+          chosen: isChosenRoute(edge),
+        }"
+        @click.stop="toggleChosenRoute(edge)"
+        :d="projectedLine([edge.source.data.geo, edge.target.data.geo])!"
+        @mouseover.stop="hoveredRoute = edge"
+        @mouseout.stop="hoveredRoute = null"
       />
-      <template v-for="edge in graph.outOrderEdges()" :key="edge">
-        <path class="route"
-          :class="{
-            hovered: isHoveredRoute(edge),
-            chosen: isChosenRoute(edge),
-          }"
-          v-d3-raise="isHoveredRoute(edge)"
-          @click.stop="toggleChosenRoute(edge)"
-          :d="lineGenerator([edge.source.data.geo, edge.target.data.geo])!"
-          :stroke-width="lineWidthScale(routeDegree(edge)) / transform.k"
-          :stroke="lineColorScale(routeShiftApprox(edge))"
-          @mouseover.stop="hoveredRoute = edge"
-          @mouseout.stop="hoveredRoute = null"
-        />
-      </template>
     </g>
-    <g class="nodes">
-      <template v-for="vertex in graph.vertices.values()" :key="vertex">
-        <g class="station"
-          :class="{
-            hovered: isHoveredStation(vertex),
-            'chosen-src': isChosenSource(vertex),
-            'chosen-dst': isChosenTarget(vertex),
-          }"
-          v-d3-raise="isHoveredStation(vertex)"
-          :transform="geoToTranslation(vertex.data.geo)"
-          @mouseover.stop="hoveredStation = vertex"
-          @mouseout.stop="hoveredStation = null">
-          <rect class="station-text-bg"
-            :x="nodeRadiusScale(stationDegree(vertex)) / transform.k" :y="-10 / transform.k"
-            :width="50 / transform.k" :height="20 / transform.k"
-            :rx="5 / transform.k" :ry="5 / transform.k"
-          />
-          <circle class="station-point"
-            @click.prevent.stop="toggleChosenSource(vertex)"
-            @contextmenu.prevent.stop="toggleChosenTarget(vertex)"
-            :stroke-width="2 / transform.k"
-            :r="nodeRadiusScale(stationDegree(vertex)) / transform.k" 
-            :fill="nodeColorScale(vertex.data.access)"
-          />
-          <text class="station-text"
-            cursor="pointer" text-anchor="middle"
-            :x="(25 + nodeRadiusScale(stationDegree(vertex))) / transform.k" :y="3.5 / transform.k"
-            :font-size="`${12 / transform.k}px`" v-text="vertex.data.name"/>
-        </g>
-      </template>
+  </g>
+  <g class="nodes">
+    <g v-for="vertex in graph.vertices.values()"
+      :transform="geoToTranslation(vertex.data.geo)"
+      v-d3-raise="isHoveredStation(vertex)">
+      <g class="station"
+        :class="{
+          hovered: isHoveredStation(vertex),
+          'chosen-src': isChosenSource(vertex),
+          'chosen-dst': isChosenTarget(vertex),
+        }"
+        @mouseover.stop="hoveredStation = vertex"
+        @mouseout.stop="hoveredStation = null">
+        <rect class="station-text-bg"
+          :x="nodeRadiusScale(stationDegree(vertex))" :y="-10"
+          :width="50" :height="20"
+          :rx="5" :ry="5"
+        />
+        <circle class="station-point"
+          @click.prevent.stop="toggleChosenSource(vertex)"
+          @contextmenu.prevent.stop="toggleChosenTarget(vertex)"
+          :stroke-width="2"
+          :r="nodeRadiusScale(stationDegree(vertex))" 
+          :fill="nodeColorScale(vertex.data.access)"
+        />
+        <text class="station-text"
+          cursor="pointer" text-anchor="middle"
+          :x="(25 + nodeRadiusScale(stationDegree(vertex)))" :y="3.5"
+          :font-size="`${12}px`" v-text="vertex.data.name"/>
+      </g>
     </g>
   </g>
   <g class="legends">
