@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { watch, type PropType } from 'vue';
+import { proxyRefs, watch, type PropType } from 'vue';
 import { useAsyncState } from '@vueuse/core';
 import { asSuccess } from '@/core/utils';
 import { type MapDataResult, type TrainGraph, type TrainGraphResult } from '@/core/data-adapter';
@@ -18,17 +18,17 @@ const emit = defineEmits<{
   ready: [data: { graph: TrainGraph, map: render.MapData }];
 }>();
 
-const mapAsync = useAsyncState(map, null);
-const graphAsync = useAsyncState(graph, null);
+const mapAsync = proxyRefs(useAsyncState(map, null));
+const graphAsync = proxyRefs(useAsyncState(graph, null));
 
 const isReady = $computed(() =>
-  graphAsync.isReady.value && mapAsync.isReady.value &&
-  graphAsync.state.value!.success && mapAsync.state.value!.success
+  graphAsync.isReady && mapAsync.isReady &&
+  graphAsync.state!.success && mapAsync.state!.success
 );
 watch($$(isReady), ready => {
   if (ready) emit('ready', {
-    graph: asSuccess(graphAsync.state.value!),
-    map: asSuccess(mapAsync.state.value!),
+    graph: asSuccess(graphAsync.state!),
+    map: asSuccess(mapAsync.state!),
   });
 });
 </script>
@@ -36,35 +36,35 @@ watch($$(isReady), ready => {
 <template>
   <div>
     <template v-if="isReady">
-      <slot :graph="asSuccess(graphAsync.state.value!)" :map="asSuccess(mapAsync.state.value!)"/>
+      <slot :graph="asSuccess(graphAsync.state!)" :map="asSuccess(mapAsync.state!)"/>
     </template>
     <div v-else class="message">
       <p>加载状态：</p>
-      <template v-if="graphAsync.isLoading.value">
+      <template v-if="graphAsync.isLoading">
         <p>线路图数据加载中...</p>
       </template>
-      <template v-else-if="graphAsync.state.value">
-        <template v-if="graphAsync.state.value.success">
+      <template v-else-if="graphAsync.state">
+        <template v-if="graphAsync.state.success">
           <p>线路图数据加载完成。</p>
         </template>
         <template v-else>
           <p>线路图数据加载失败，调试信息如下：</p>
-          <pre lang="json">{{ JSON.stringify(graphAsync.state.value.failure) }}</pre>
+          <pre lang="json">{{ JSON.stringify(graphAsync.state.failure) }}</pre>
         </template>
       </template>
       <template v-else>
         <p>线路图数据加载失败，发生未知错误。</p>
       </template>
-      <template v-if="mapAsync.isLoading.value">
+      <template v-if="mapAsync.isLoading">
         <p>地图数据加载中...</p>
       </template>
-      <template v-else-if="mapAsync.state.value">
-        <template v-if="mapAsync.state.value.success">
+      <template v-else-if="mapAsync.state">
+        <template v-if="mapAsync.state.success">
           <p>地图数据加载完成。</p>
         </template>
         <template v-else>
           <p>地图数据加载失败，调试信息如下：</p>
-          <pre lang="json">{{ JSON.stringify(mapAsync.state.value.failure) }}</pre>
+          <pre lang="json">{{ JSON.stringify(mapAsync.state.failure) }}</pre>
         </template>
       </template>
       <template v-else>
