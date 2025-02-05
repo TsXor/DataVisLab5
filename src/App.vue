@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { collectTrainGraph, collectMapData } from './core/data-adapter';
-
 import InfoPanel from './components/InfoPanel.vue'
 import VisualPanel from './components/VisualPanel.vue';
 import DataSuspense from './components/DataSuspense.vue';
@@ -21,8 +19,7 @@ import resIconHeatmap from '@/assets/img/heatmap.png'
     <div name="过滤器"><div v-html="resInfoFilter"/></div>
     <div name="参数"><div v-html="resInfoParam"/></div>
   </InfoPanel>
-  <DataSuspense id="map-view" v-slot="{ graph, map }"
-    :map="collectMapData()" :graph="collectTrainGraph()">
+  <DataSuspense id="map-view" v-slot="{ graph, map }">
     <MapView :map="map" v-slot="{ transform, projection }">
       <GraphView :graph="graph" :transform="transform" :projection="projection"/>
     </MapView>
