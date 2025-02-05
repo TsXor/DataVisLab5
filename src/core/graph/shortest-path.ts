@@ -1,13 +1,12 @@
 import PriorityQueue from 'priorityqueuejs';
-import { Graph, Edge, type EdgeOf, Vertex, type VertexOf } from './graph';
+import { Graph, type Edge, type EdgeOf, type VertexOf } from './graph';
 
-export type Path<V, E> = { weight: number; trace?: [Edge<null, Path<V, E>>, Edge<null, Path<V, E>>]; };
-export type PathGraph<V, E> = Graph<null, Path<V, E>>;
-export type PathVertex<V, E> = VertexOf<PathGraph<V, E>>;
-export type PathEdge<V, E> = EdgeOf<PathGraph<V, E>>;
-export type PathOf<G> = G extends Graph<infer V, infer E> ? PathGraph<V, E> : never;
+export type Path = { weight: number; trace?: [Edge<null, Path>, Edge<null, Path>]; };
+export type PathGraph = Graph<null, Path>;
+export type PathVertex = VertexOf<PathGraph>;
+export type PathEdge = EdgeOf<PathGraph>;
 
-export function* walkPathVertices<V, E>(path: PathEdge<V, E>): Generator<PathVertex<V, E>> {
+export function* walkPathVertices(path: PathEdge): Generator<PathVertex> {
   if (path.data.trace) {
     const [l, r] = path.data.trace;
     yield* walkPathVertices(l);
@@ -16,7 +15,7 @@ export function* walkPathVertices<V, E>(path: PathEdge<V, E>): Generator<PathVer
   }
 }
 
-export function* walkPathEdges<V, E>(path: PathEdge<V, E>): Generator<PathEdge<V, E>> {
+export function* walkPathEdges(path: PathEdge): Generator<PathEdge> {
   if (path.data.trace) {
     const [l, r] = path.data.trace;
     yield* walkPathEdges(l);
@@ -26,8 +25,8 @@ export function* walkPathEdges<V, E>(path: PathEdge<V, E>): Generator<PathEdge<V
   }
 }
 
-export function extractWeights<V, E>(G: Graph<V, E>, weight: (edge: Edge<V, E>) => number): PathGraph<V, E> {
-  const W = new Graph<null, Path<V, E>>();
+export function extractWeights<V, E>(G: Graph<V, E>, weight: (edge: Edge<V, E>) => number): PathGraph {
+  const W = new Graph<null, Path>();
   for (const vertex of G.vertices.values()) { W.addVertex(vertex.id, null); }
   for (const edge of G.outOrderEdges()) {
     const source = W.getVertex(edge.source.id)!;
@@ -40,7 +39,7 @@ export function extractWeights<V, E>(G: Graph<V, E>, weight: (edge: Edge<V, E>) 
   return W;
 }
 
-export function floyd<V, E>(P: PathGraph<V, E>) {
+export function floyd(P: PathGraph) {
   for (const vertex of P.vertices.values()) {
     for (const [source, inEdge] of vertex.in) {
       if (inEdge.isSelfLoop()) continue;
@@ -58,8 +57,8 @@ export function floyd<V, E>(P: PathGraph<V, E>) {
   return P;
 }
 
-export function dijkstra<V, E>(P: PathGraph<V, E>, source: PathVertex<V, E>) {
-  const pq = new PriorityQueue<EdgeOf<typeof P>>((a, b) => a.data.weight - b.data.weight);
+export function dijkstra(P: PathGraph, source: PathVertex) {
+  const pq = new PriorityQueue<PathEdge>((a, b) => a.data.weight - b.data.weight);
   for (const edge of source.out.values()) { if (!edge.isSelfLoop()) pq.enq(edge); }
   while (pq.size() > 0) {
     const baseEdge = pq.deq();
@@ -77,7 +76,7 @@ export function dijkstra<V, E>(P: PathGraph<V, E>, source: PathVertex<V, E>) {
   return P;
 }
 
-export function multiDijkstra<V, E>(P: PathGraph<V, E>) {
-  for (const source of P.vertices.values()) { dijkstra<V, E>(P, source); }
+export function multiDijkstra(P: PathGraph) {
+  for (const source of P.vertices.values()) { dijkstra(P, source); }
   return P;
 }
