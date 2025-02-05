@@ -1,9 +1,11 @@
 export class Vertex<V, E> {
+  id: {};
   in: Map<Vertex<V, E>, Edge<V, E>>;
   out: Map<Vertex<V, E>, Edge<V, E>>;
   data: V;
 
-  constructor(data: V) {
+  constructor(id: {}, data: V) {
+    this.id = id;
     this.in = new Map();
     this.out = new Map();
     this.data = data;
@@ -39,31 +41,29 @@ export class Edge<V, E> {
 
 export class Graph<V, E> {
   vertices: Map<{}, Vertex<V, E>>;
-  vertexId: (vertex: V) => {};
 
-  constructor(vertexId?: (vertex: V) => {}) {
+  constructor() {
     this.vertices = new Map();
-    this.vertexId = vertexId ?? (vertex => vertex!);
   }
 
   getVertex(id: {}) {
     return this.vertices.get(id);
   }
 
-  findVertex(data: V) {
-    return this.getVertex(this.vertexId(data));
+  findVertex(vertex: Vertex<V, E>) {
+    return this.getVertex(vertex.id);
   }
 
-  addVertex(data: V) {
-    let vertex = new Vertex<V, E>(data);
-    this.vertices.set(this.vertexId(data), vertex);
+  addVertex(id: {}, data: V) {
+    let vertex = new Vertex<V, E>(id, data);
+    this.vertices.set(id, vertex);
     return vertex;
   }
 
   delVertex(vertex: Vertex<V, E>) {
     vertex.out.clear();
     vertex.in.clear();
-    this.vertices.delete(this.vertexId(vertex.data));
+    this.vertices.delete(vertex.id);
   }
 
   *inOrderEdges() {

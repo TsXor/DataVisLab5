@@ -1,7 +1,7 @@
 import * as d3 from 'd3';
 import type { data, render } from "./dtypes";
-import { Graph, type EdgeOf, type VertexOf } from "./graph/graph";
 import type { Result } from "./utils";
+import { Graph, type EdgeOf, type VertexOf } from "./graph/graph";
 
 function unwrapImport<T>(promise: Promise<any>): Promise<T> {
   return promise.then(o => o.default) as Promise<T>;
@@ -55,8 +55,8 @@ export async function collectTrainGraph(): Promise<TrainGraphResult> {
   if (!stations) { success = false; failure.stations = true; }
   if (!routes) { success = false; failure.routes = true; }
   if (!success) return { success, failure };
-  const G = new Graph<data.Station, data.Route>(vertex => vertex.name);
-  for (const station of stations!) { G.addVertex(station); }
+  const G = new Graph<data.Station, data.Route>();
+  for (const station of stations!) { G.addVertex(station.name, station); }
   for (const { name: src, to } of routes!) {
     for (const { name: dst, data } of to) {
       G.addEdge(G.getVertex(src)!, G.getVertex(dst)!, data);
@@ -77,3 +77,6 @@ export function routeShiftApprox(route: EdgeOf<TrainGraph>) {
   const whatIsThat = d3.min([(route.source.data.access + route.target.data.access) / 2, 31921.15])!;
   return whatIsThis * whatIsThat;
 }
+
+export function routeDuration(route: EdgeOf<TrainGraph>) { return route.data.params[0]; }
+export function routeDistance(route: EdgeOf<TrainGraph>) { return route.data.params[1]; }

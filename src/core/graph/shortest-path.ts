@@ -1,10 +1,11 @@
 import PriorityQueue from 'priorityqueuejs';
 import { Graph, Edge, type EdgeOf, Vertex, type VertexOf } from './graph';
 
-export type Path<V, E> = { weight: number; trace?: [Edge<Vertex<V, E>, Path<V, E>>, Edge<Vertex<V, E>, Path<V, E>>]; };
-export type PathGraph<V, E> = Graph<Vertex<V, E>, Path<V, E>>;
+export type Path<V, E> = { weight: number; trace?: [Edge<null, Path<V, E>>, Edge<null, Path<V, E>>]; };
+export type PathGraph<V, E> = Graph<null, Path<V, E>>;
 export type PathVertex<V, E> = VertexOf<PathGraph<V, E>>;
 export type PathEdge<V, E> = EdgeOf<PathGraph<V, E>>;
+export type PathOf<G> = G extends Graph<infer V, infer E> ? PathGraph<V, E> : never;
 
 export function* walkPathVertices<V, E>(path: PathEdge<V, E>): Generator<PathVertex<V, E>> {
   if (path.data.trace) {
@@ -26,11 +27,11 @@ export function* walkPathEdges<V, E>(path: PathEdge<V, E>): Generator<PathEdge<V
 }
 
 export function extractWeights<V, E>(G: Graph<V, E>, weight: (edge: Edge<V, E>) => number): PathGraph<V, E> {
-  const W = new Graph<Vertex<V, E>, Path<V, E>>(vertex => G.vertexId(vertex.data));
-  for (const vertex of G.vertices.values()) { W.addVertex(vertex); }
+  const W = new Graph<null, Path<V, E>>();
+  for (const vertex of G.vertices.values()) { W.addVertex(vertex.id, null); }
   for (const edge of G.outOrderEdges()) {
-    const source = W.findVertex(edge.source)!;
-    const target = W.findVertex(edge.target)!;
+    const source = W.getVertex(edge.source.id)!;
+    const target = W.getVertex(edge.target.id)!;
     W.addEdge(source, target, { weight: weight(edge) });
   }
   for (const vertex of W.vertices.values()) {
