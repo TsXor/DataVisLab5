@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as d3 from 'd3';
 import { type PropType } from 'vue';
-import { svgPoints, type Points } from '@/vueshim/utils';
+import { svgu } from '@/vueshim/utils';
 import BaseLegend from './BaseLegend.vue';
 
 
@@ -33,14 +33,14 @@ const barPoints = $computed(() => {
     [props.barWidth, 0], // 右上角
     [props.barWidth, props.barHeight], // 右下角
     [0, props.barHeight], // 左下角
-  ] as Points;
+  ] as svgu.Point[];
 });
 </script>
 
 <template>
   <BaseLegend v-bind="props">
     <template #bar>
-      <polygon class="bar" :points="svgPoints(barPoints)"/>
+      <polygon class="bar" :points="svgu.points(barPoints)"/>
     </template>
     <template #icon-left="{ min }">
       <slot name="icon-left" :size="min"/>

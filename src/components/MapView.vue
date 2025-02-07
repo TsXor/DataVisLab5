@@ -3,6 +3,7 @@ import * as d3 from 'd3';
 import { watch, type PropType } from 'vue';
 import { v, vD3Bind } from '@/vueshim/d3v';
 import type { data, render } from '@/core/dtypes';
+import { svgu } from '@/vueshim/utils';
 
 defineSlots<{
   default(props: { transform: d3.ZoomTransform; projection: d3.GeoProjection }): any
@@ -17,7 +18,7 @@ const { viewSize, mapCenter, mapScale } = defineProps({
 
 const viewBox = $computed(() => {
   const [width, height] = viewSize;
-  return `0 0 ${width} ${height}`;
+  return svgu.viewbox(0, 0, width, height);
 });
 
 const zoom = new v.Zoom(z => z.scaleExtent([0.01, 8]));

@@ -4,21 +4,16 @@ import type { PropType } from 'vue';
 import { v, vD3Render } from '@/vueshim/d3v';
 import type { PathGraph } from '@/core/graph/shortest-path';
 import type { ElementOf } from '@vueuse/core';
+import { svgu } from '@/vueshim/utils';
 
-
-type PointXY = { x: number; y: number };
-
-function svgTranslate(p: PointXY) {
-  return `translate(${p.x}, ${p.y})`;
-}
 
 // 是的，想想线代！
-const mirrorY = 'matrix(1, 0, 0, -1, 0, 0)';
+const mirrorY = svgu.matrix(1, 0, 0, -1, 0, 0);
 
 function generatePachinkoStack(distance: number, xs: Iterable<number>) {
   const radius2 = distance ** 2;
-  const bisect = d3.bisector<PointXY, number>(d => d.x);
-  const circles = [] as PointXY[];
+  const bisect = d3.bisector<svgu.PointXY, number>(d => d.x);
+  const circles = [] as svgu.PointXY[];
   // 哦我的天哪，下面这段代码的复杂度达到了劲爆的O(E^2)！
   for (const x of xs) {
     const l = bisect.left(circles, x - distance);
@@ -47,7 +42,7 @@ function* generateTidyStack(distance: number, count: number, width: number, heig
   let got = 0;
   for (let j = 0; j < nr; ++j) {
     for (let i = 0; i < nc; ++i) {
-      yield { x: distance * (i + 0.5), y: distance * (j + 0.5) } as PointXY;
+      yield { x: distance * (i + 0.5), y: distance * (j + 0.5) } as svgu.PointXY;
       got += 1; if (got >= count) return;
     }
   }
@@ -64,7 +59,7 @@ const { graph, viewSize, numberSize, labelSize, ballSize, infinityStackWidth } =
 
 const viewBox = $computed(() => {
   const [width, height] = viewSize;
-  return `0 0 ${width} ${height}`;
+  return svgu.viewbox(0, 0, width, height);
 });
 
 const size = $computed(() => {
@@ -128,29 +123,29 @@ const infinityPoints = $computed(() => Array.from(generateTidyStack(
 <template>
   <svg :viewBox="viewBox">
     <g>
-      <g class="curve" :transform="`${svgTranslate(size.origin)}`">
-        <g class="x-axis" :transform="`translateX(${0})`" 
+      <g class="curve" :transform="svgu.translateOf(size.origin)">
+        <g class="x-axis" :transform="svgu.translate(0, 0)" 
           v-d3-render="v.withTransition(d3.axisBottom(ui.x).tickSizeOuter(0), t => t.duration(1000))"/>
-        <g class="y-axis" :transform="`translate(0, ${-size.height})`"
+        <g class="y-axis" :transform="svgu.translate(0, -size.height)"
           v-d3-render="v.withTransition(d3.axisLeft(ui.y).tickSizeOuter(0), t => t.duration(1000))"/>
-        <path :transform="`translate(0, ${-size.height})`" :d="ui.line(data.density)!"/>
+        <path :transform="svgu.translate(0, -size.height)" :d="ui.line(data.density)!"/>
       </g>
-      <text class="x-axis-label" font-size="12px" :transform="`${svgTranslate(size.xLabel)}`">
+      <text class="x-axis-label" font-size="12px" :transform="svgu.translateOf(size.xLabel)">
         <tspan x="0" dy="-15" v-text="'客流密度'"/>
         <tspan x="0" dy="12" v-text="'/(万人/km)'"/>
       </text>
-      <text class="y-axis-label" font-size="12px" :transform="`${svgTranslate(size.yLabel)}`">
+      <text class="y-axis-label" font-size="12px" :transform="svgu.translateOf(size.yLabel)">
         <tspan x="0" dy="-15" v-text="'里程数'"/>
         <tspan x="0" dy="12" v-text="'/km'"/>
       </text>
-      <text class="infinity-label" font-size="10px" :transform="`${svgTranslate(size.infLabel)}`">
+      <text class="infinity-label" font-size="10px" :transform="svgu.translateOf(size.infLabel)">
         <tspan x="0" dy="12" text-anchor="middle" v-text="'Infinity'"/>
       </text>
       <g class="balls">
-        <g class="pachinko-balls" :transform="`${svgTranslate(size.origin)} ${mirrorY}`">
+        <g class="pachinko-balls" :transform="[svgu.translateOf(size.origin), mirrorY].join(' ')">
           <circle v-for="point in pachinkoPoints" :cx="point.x" :cy="point.y" :r="ballSize"/>
         </g>
-        <g class="infinity-balls" :transform="`${svgTranslate(size.infStack)} ${mirrorY}`">
+        <g class="infinity-balls" :transform="[svgu.translateOf(size.infStack), mirrorY].join(' ')">
           <circle v-for="point in infinityPoints" :cx="point.x" :cy="point.y" :r="ballSize"/>
         </g>
       </g>
