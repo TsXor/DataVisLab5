@@ -4,6 +4,7 @@ import VisualPanel from './components/VisualPanel.vue';
 import DataSuspense from './components/DataSuspense.vue';
 import MapView from './components/MapView.vue';
 import GraphView from './components/GraphView.vue';
+import MultiDensityCurve from './components/MultiDensityCurve.vue';
 
 import resInfoIntro from '@/assets/html/intro.html?raw';
 import resInfoFilter from '@/assets/html/filter.html?raw';
@@ -26,7 +27,9 @@ import resIconHeatmap from '@/assets/img/heatmap.png'
   </DataSuspense>
   <!-- 右侧栏 -->
   <VisualPanel id="right-panel">
-    <div :icon="resIconDensityCurve"></div>
+    <div :icon="resIconDensityCurve">
+      <MultiDensityCurve/>
+    </div>
     <div :icon="resIconHeatmap"></div>
   </VisualPanel>
 </template>
