@@ -13,8 +13,8 @@ import resIconResize from '@/assets/img/resize.svg'
 const choice = defineModel({ type: Number, default: -1, });
 
 const floating = $ref({
-  width: visualViewport!.width * 50 / 100,
-  height: visualViewport!.height * 75 / 100,
+  width: visualViewport!.width * 75 / 100,
+  height: visualViewport!.height * 80 / 100,
   cx: visualViewport!.width / 2,
   cy: visualViewport!.height / 2,
   resize: (x: number, y: number) => {
@@ -64,14 +64,13 @@ const floating = $ref({
 
 .popup-floating {
   position: absolute;
-  left: 5%;
-  width: 90%;
   background-color: white;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
   border: 1px solid #ddd;
-  top: 50px;
   z-index: 10;
   border-radius: 10px;
+  display: flex;
+  flex-direction: column;
 }
 
 .widget-container {
@@ -79,6 +78,7 @@ const floating = $ref({
   height: 100%;
   overflow-y: scroll;
   opacity: 1;
+  flex-grow: 1;
 }
 
 .control-bar {
@@ -86,6 +86,7 @@ const floating = $ref({
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
+  flex-shrink: 0;
 }
 
 .closer {
