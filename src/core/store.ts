@@ -3,7 +3,7 @@ import { defineStore } from 'pinia'
 import { useAsyncState } from '@vueuse/core';
 import { asSuccess } from './utils';
 import { collectMapData, collectTrainGraph, routeDistance, routeDuration, type TrainGraph } from './data-adapter';
-import { extractWeights, multiDijkstra } from './graph/shortest-path';
+import { extractWeights, multiDijkstra, type PathEdge } from './graph/shortest-path';
 import type { EdgeOf } from './graph/graph';
 
 
@@ -39,4 +39,13 @@ export const useGraphStore = defineStore('graph', () => {
   const distance = shortestPath(routeDistance);
   const duration = shortestPath(routeDuration);
   return { graph, distance, duration };
+});
+
+export type PathType = 'distance' | 'duration';
+export const useSelectionStore = defineStore('selectionEdge', () => {
+  const path = shallowRef({
+    type: 'distance' as PathType,
+    edge: null as PathEdge | null,
+  });
+  return { path };
 });

@@ -1,10 +1,26 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-import { useGraphStore } from '@/core/store';
+import { computed, ref } from 'vue';
+import { useGraphStore, useSelectionStore, type PathType } from '@/core/store';
 import HeatMap from './HeatMap.vue';
 
 const graph = useGraphStore();
 const selected = ref('distance');
+
+const globalSelection = useSelectionStore();
+function bindGlobalEdge(name: PathType) {
+  return computed({
+    get() {
+      return globalSelection.path.type === name
+        ? globalSelection.path.edge : null;
+    },
+    set(edge) {
+      if (selected.value === name) {
+        globalSelection.path = { type: name, edge };
+      }
+    }
+  });
+}
+const chosenDistanceEdge = bindGlobalEdge('distance');
 </script>
 
 <template>
@@ -17,7 +33,8 @@ const selected = ref('distance');
       <h2>站点路程-热力图</h2>
       <p>表示任意两站之间的最短路程长度(km)。点击以在距离拓扑视图中观察最短路程。</p>
     </div>
-    <HeatMap class="view" v-if="graph.distance" :graph="graph.distance"/>
+    <HeatMap class="view" v-if="graph.distance" :graph="graph.distance"
+      v-model:chosen-edge="chosenDistanceEdge"/>
     <div class="loading" v-else>
       <p>线路图数据加载中...</p>
     </div>
