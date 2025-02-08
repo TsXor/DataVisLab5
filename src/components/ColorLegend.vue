@@ -2,6 +2,8 @@
 import * as d3 from 'd3';
 import { useId, type PropType } from 'vue';
 import BaseLegend from './BaseLegend.vue';
+import { svgu } from '@/vueshim/utils';
+import { d3u, vD3Render } from '@/vueshim/d3v';
 
 
 defineSlots<{
@@ -25,13 +27,8 @@ const colorGradientId = useId();
 <template>
   <BaseLegend v-bind="props">
     <template #bar>
-      <defs>
-        <linearGradient :id="colorGradientId" x1="0%" x2="100%" y1="0%" y2="0%">
-          <stop offset="0%" :stop-color="scaler.range()[0]"/>
-          <stop offset="100%" :stop-color="scaler.range()[1]"/>
-        </linearGradient>
-      </defs>
-      <rect class="bar" :width="barWidth" :height="barHeight" :fill="`url(#${colorGradientId})`"/>
+      <defs v-d3-render="d3u.rangeGradientX(colorGradientId, scaler.range())"/>
+      <rect class="bar" :width="barWidth" :height="barHeight" :fill="svgu.urlId(colorGradientId)"/>
     </template>
     <template #icon-left="{ min }">
       <slot name="icon-left" :color="min"/>

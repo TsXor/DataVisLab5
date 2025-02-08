@@ -31,6 +31,10 @@ export function callExpr(name: string, ...args: { toString(): string }[]) {
   return `${name}(${args.map(arg => arg.toString()).join(',')})`;
 }
 
+export function urlId(id: string) {
+  return `url(#${id})`;
+}
+
 export function points(points: Point[]) {
   return points.map(([x, y]) => `${x},${y}`).join(' ');
 }

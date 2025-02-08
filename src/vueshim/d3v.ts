@@ -166,3 +166,41 @@ export function vD3Render(el: Element, binding: v.RenderBinding): void {
 export function vD3Raise(el: Element, binding: v.RaiseBinding): void {
   if (binding.value) d3.select(el).raise();
 }
+
+export namespace d3u {
+
+export function rangeGradientX(id: string, range: string[]) {
+  return (selection: v.Selection<SVGDefsElement>) => {
+    const gradient = selection.append('linearGradient')
+      .attr("id", id)
+      .attr("x1", "0%")
+      .attr("y1", "0%")
+      .attr("x2", "100%")
+      .attr("y2", "0%");
+    gradient.append('stop')
+      .attr('offset', '0%')
+      .attr('stop-color', range[0]);
+    gradient.append('stop')
+      .attr('offset', '100%')
+      .attr('stop-color', range[1]);
+  }
+}
+
+export function rampGradientX(id: string, interpolator: (n: number) => string, stops: number) {
+  return (selection: v.Selection<SVGDefsElement>) => {
+    const gradient = selection.append('linearGradient')
+      .attr("id", id)
+      .attr("x1", "0%")
+      .attr("y1", "0%")
+      .attr("x2", "100%")
+      .attr("y2", "0%");
+    d3.range(0, stops).forEach(i => {
+      const t = i / (stops - 1);
+      gradient.append('stop')
+        .attr('offset', `${t * 100}%`)
+        .attr('stop-color', interpolator(t));
+    });
+  }
+}
+
+} // export namespace d3u
