@@ -12,7 +12,7 @@ const selected = ref('distance');
     <option value="distance">最近距离</option>
     <option value="duration">最短时间</option>
   </select>
-  <div class="content" v-if="selected === 'distance'">
+  <div class="content" v-show="selected === 'distance'">
     <div class="title">
       <h2>客流密度-里程图</h2>
       <p>x=a到x=b之间的面积S表示平均每年有S万人次乘坐火车的里程(km)在a与b之间。</p>
@@ -22,7 +22,7 @@ const selected = ref('distance');
       <p>线路图数据加载中...</p>
     </div>
   </div>
-  <div class="content" v-if="selected === 'duration'">
+  <div class="content" v-show="selected === 'duration'">
     <div>
       <h2>Work Work</h2>
       <p>此处的内容正在施工中。</p>
