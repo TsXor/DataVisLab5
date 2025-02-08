@@ -203,4 +203,18 @@ export function rampGradientX(id: string, interpolator: (n: number) => string, s
   }
 }
 
+export function textLines(lines: string[], textSize: number, lineHeight: number) {
+  return (selection: v.Selection<SVGTextElement>) => {
+    selection.attr('y', -(lineHeight - textSize) / 2);
+    selection.selectChildren().remove();
+    lines.forEach(line => {
+      selection.append('tspan')
+        .attr('x', 0)
+        .attr('dy', lineHeight)
+        .attr('font-size', `${textSize}px`)
+        .text(line);
+    });
+  };
+}
+
 } // export namespace d3u

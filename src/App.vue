@@ -5,6 +5,7 @@ import DataSuspense from './components/DataSuspense.vue';
 import MapView from './components/MapView.vue';
 import GraphView from './components/GraphView.vue';
 import MultiDensityCurve from './components/MultiDensityCurve.vue';
+import MultiHeatMap from './components/MultiHeatMap.vue';
 
 import resInfoIntro from '@/assets/html/intro.html?raw';
 import resInfoFilter from '@/assets/html/filter.html?raw';
@@ -30,7 +31,9 @@ import resIconHeatmap from '@/assets/img/heatmap.png'
     <div :icon="resIconDensityCurve">
       <MultiDensityCurve/>
     </div>
-    <div :icon="resIconHeatmap"></div>
+    <div :icon="resIconHeatmap">
+      <MultiHeatMap/>
+    </div>
   </VisualPanel>
 </template>
 

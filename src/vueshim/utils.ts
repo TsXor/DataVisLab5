@@ -58,8 +58,35 @@ export function scale(...args: [x: number, y: number] | [n: number]) {
   return callExpr('scale', ...args);
 }
 
+export function scaleOrigin(x: number, y: number, ...args: [x: number, y: number] | [n: number]) {
+  let scaleX: number, scaleY: number;
+  if (args.length === 1) { const [n] = args; scaleX = n; scaleY = n; }
+  else { [scaleX, scaleY] = args; }
+  return matrix(scaleX, 0, 0, scaleY, (scaleX - 1) * -x, (scaleY - 1) * -y);
+}
+
 export function matrix(a: number, b: number, c: number, d: number, e: number, f: number) {
   return callExpr('matrix', a, b, c, d, e, f);
 }
 
 } // export namespace svgu
+
+/**
+ * 粗略计算文字所需的宽高，并简单分行。
+ * @param lines 输入的文字，按行分隔
+ * @param textSize 文字大小
+ * @param lineHeight 行高
+ * @param widthLimit 宽度能容纳的文字数
+ */
+export function calcTextbox(lines: string[], textSize: number, lineHeight: number, widthLimit: number) {
+  const truncLines = lines.flatMap(line => {
+    return Array.from((function* () {
+      for (let i = 0; i < line.length; i += widthLimit) yield line.substring(i, i + widthLimit);
+    })());
+  });
+  let actualWidth = 0;
+  truncLines.forEach(line => { if (actualWidth < line.length) actualWidth = line.length; });
+  const width = actualWidth * textSize;
+  const height = truncLines.length * lineHeight;
+  return { width, height, truncLines };
+}
