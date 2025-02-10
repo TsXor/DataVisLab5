@@ -1,7 +1,7 @@
 <script setup lang="ts" generic="Range">
 import * as d3 from 'd3';
 import { watch, type PropType } from 'vue';
-import { v, vD3Bind, vD3Render } from '@/vueshim/d3v';
+import { d3ovr, vD3Apply, vD3Render } from '@/vueshim/d3v';
 import { clamp } from '@vueuse/core';
 import { svgu } from '@/vueshim/utils';
 
@@ -40,8 +40,6 @@ const rightX = $computed({
   get: () => axisScale(filterMax!),
   set: x => { filterMax = clamp(axisScale.invert(x), filterMin, scaler.domain()[1]); }
 });
-const leftDrag = new v.Drag().attachPos({ x: $$(leftX) });
-const rightDrag = new v.Drag().attachPos({ x: $$(rightX) });
 </script>
 
 <template>
@@ -59,9 +57,11 @@ const rightDrag = new v.Drag().attachPos({ x: $$(rightX) });
           <g class="axis" v-d3-render="d3.axisBottom(axisScale).ticks(5)"/>
           <line class="selected" :x1="leftX" :x2="rightX" y1="0" y2="0"/>
           <polygon class="chooser" :points="svgu.points(leftChooserPoints)"
-            :transform="svgu.translate(leftX, 0)" v-d3-bind="leftDrag" />
+            :transform="svgu.translate(leftX, 0)"
+            v-d3-apply="d3ovr.drag().on('drag', event => leftX += event.dx)"/>
           <polygon class="chooser" :points="svgu.points(rightChooserPoints)"
-            :transform="svgu.translate(rightX, 0)" v-d3-bind="rightDrag"/>
+            :transform="svgu.translate(rightX, 0)"
+            v-d3-apply="d3ovr.drag().on('drag', event => rightX += event.dx)"/>
         </g>
       </g>
     </g>

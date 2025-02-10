@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as d3 from 'd3';
 import { watch, type PropType } from 'vue';
-import { v, vD3Bind } from '@/vueshim/d3v';
+import { d3ovr, d3u, vD3Apply } from '@/vueshim/d3v';
 import type { data, render } from '@/core/dtypes';
 import { svgu } from '@/vueshim/utils';
 
@@ -21,8 +21,8 @@ const viewBox = $computed(() => {
   return svgu.viewbox(0, 0, width, height);
 });
 
-const zoom = new v.Zoom(z => z.scaleExtent([0.01, 8]));
-const transform = $(zoom.useTransformState());
+const zoom = d3u.zoomController(d3ovr.zoom().scaleExtent([0.01, 8]));
+const transform = $(zoom.state);
 
 const projection = $computed(() => {
   const [width, height] = viewSize;
@@ -38,7 +38,9 @@ const geoPath = $computed(() => d3.geoPath(projection));
 let focusedRegion = $shallowRef<{region: data.Region, pos: [number, number]} | null>(null);
 function isFocusedRegion(region: data.Region) { return focusedRegion?.region === region; }
 function toggleFocusedRegion(event: MouseEvent, region: data.Region) {
-  focusedRegion = isFocusedRegion(region) ? null : { region, pos: d3.pointer(event, zoom.el.value!) };
+  focusedRegion = isFocusedRegion(region) ? null : { region,
+    pos: d3.pointer(event, zoom.selection!.node())
+  };
 }
 // 在省份注意点转换时，执行缩放
 watch($$(focusedRegion), focus => {
@@ -58,7 +60,7 @@ watch($$(focusedRegion), focus => {
   } else { // 重置缩放
     zoom.transform(
       d3.zoomIdentity,
-      transform!.invert([width / 2, height / 2]),
+      transform.invert([width / 2, height / 2]),
       t => t.duration(750),
     );
   }
@@ -67,7 +69,7 @@ watch($$(focusedRegion), focus => {
 
 <template>
   <div class="aligner">
-    <svg :viewBox="viewBox" @contextmenu.prevent v-d3-bind="zoom">
+    <svg :viewBox="viewBox" @contextmenu.prevent v-d3-apply="zoom">
       <g :transform="transform.toString()" @click.stop="focusedRegion = null">
         <g class="map">
           <!-- provinces -->

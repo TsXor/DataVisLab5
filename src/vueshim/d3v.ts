@@ -1,6 +1,29 @@
 import * as d3 from 'd3';
-import { readonly, shallowRef, watch, type DirectiveBinding, type ShallowRef } from 'vue';
-import { type ReadonlyShallowRef, type WritableRef } from './utils'
+import { shallowRef, type DirectiveBinding } from 'vue';
+import type { Arrayable } from '@vueuse/core';
+
+export namespace d3ovr {
+
+export interface DragBehavior<GElement extends d3.DraggedElementBaseType, Datum, Subject> extends d3.DragBehavior<GElement, Datum, Subject> {
+  on(typenames: string): ((this: GElement, event: d3.D3DragEvent<GElement, Datum, Subject>, d: Datum) => void) | undefined;
+  on(typenames: string, listener: null): this;
+  on(typenames: string, listener: (this: GElement, event: d3.D3DragEvent<GElement, Datum, Subject>, d: Datum) => void): this;
+};
+export const drag = d3.drag as {
+  <GElement extends d3.DraggedElementBaseType, Datum>(): DragBehavior<GElement, Datum, Datum | d3.SubjectPosition>;
+  <GElement extends d3.DraggedElementBaseType, Datum, Subject>(): DragBehavior<GElement, Datum, Subject>;
+};
+
+export interface ZoomBehavior<ZoomRefElement extends d3.ZoomedElementBaseType, Datum> extends d3.ZoomBehavior<ZoomRefElement, Datum> {
+  on(typenames: string): ((this: ZoomRefElement, event: d3.D3ZoomEvent<ZoomRefElement, Datum>, d: Datum) => void) | undefined;
+  on(typenames: string, listener: null): this;
+  on(typenames: string, listener: (this: ZoomRefElement, event: d3.D3ZoomEvent<ZoomRefElement, Datum>, d: Datum) => void): this;
+};
+export const zoom = d3.zoom as {
+  <ZoomRefElement extends d3.ZoomedElementBaseType, Datum>(): ZoomBehavior<ZoomRefElement, Datum>;
+};
+
+} // export namespace d3ovr
 
 export namespace v {
 
@@ -15,12 +38,6 @@ export type Config<T> = Consumer<T, any>;
 
 export type Selection<E extends Element = Element> = d3.Selection<E, undefined, null, undefined>;
 export type Transition<E extends Element = Element> = d3.Transition<E, undefined, null, undefined>;
-export type ZoomBehavior = d3.ZoomBehavior<Element, undefined>;
-export type ZoomEvent = d3.D3ZoomEvent<Element, undefined>;
-export type ZoomEventListener = (this: Element, event: ZoomEvent) => void;
-export type DragBehavior = d3.DragBehavior<Element, undefined, d3.SubjectPosition | undefined>;
-export type DragEvent = d3.D3DragEvent<Element, undefined, d3.SubjectPosition | undefined>;
-export type DragEventListener = (this: Element, event: DragEvent) => void;
 
 export function select(el: Element) {
   return d3.select<Element, undefined>(el);
@@ -43,18 +60,8 @@ export function withTransition<E extends Element, R>(
   };
 }
 
-interface ElementBound {
-  el: ShallowRef<Element | null>;
-};
-
-export type BindBinding = DirectiveBinding<
-  ElementBound | ElementBound[],
-  never,
-  never
->;
-
-export type RenderBinding = DirectiveBinding<
-  (selection: Selection<any>) => any,
+export type ApplyBinding = DirectiveBinding<
+  Arrayable<(selection: Selection<any>) => any>,
   never,
   never
 >;
@@ -65,99 +72,26 @@ export type RaiseBinding = DirectiveBinding<
   never
 >;
 
-export class Zoom implements ElementBound {
-  el: ShallowRef<Element | null>;
-  config: ZoomBehavior;
-
-  constructor(options?: Config<ZoomBehavior>) {
-    this.el = shallowRef(null);
-    this.config = d3.zoom<Element, undefined>();
-    if (options) options(this.config);
-    watch(this.el, el => { if (el) select(el).call(this.config); }, { immediate: true });
-  }
-
-  transform(transform: d3.ZoomTransform, point?: [number, number], transitionOptions?: Config<Transition>): this {
-    if (!this.el.value) return this;
-    const selection = select(this.el.value);
-    if (transitionOptions) {
-      const transition = selection.transition();
-      transitionOptions(transition);
-      transition.call(this.config.transform, transform, point);
-    } else {
-      selection.call(this.config.transform, transform, point);
-    }
-    return this;
-  }
-
-  on(typenames: string): ZoomEventListener | undefined;
-  on(typenames: string, listener: null): this;
-  on(typenames: string, listener: ZoomEventListener): this;
-  on(...args: any[]): any {
-    let ret = this.config.on.apply(this.config, args as any);
-    return ret === this.config ? this : ret;
-  }
-
-  useTransformState(name?: string): ReadonlyShallowRef<d3.ZoomTransform> {
-    name ??= '_state';
-    const transformState = shallowRef<d3.ZoomTransform>(d3.zoomIdentity);
-    this.on(`zoom.${name}`, event => transformState.value = event.transform);
-    watch(this.el, el => { transformState.value = el ? d3.zoomTransform(el) : d3.zoomIdentity; });
-    return readonly(transformState);
-  }
-};
-
-type PosRefOptions = { x?: WritableRef<number>, y?: WritableRef<number> };
-
-export class Drag implements ElementBound {
-  el: ShallowRef<Element | null>;
-  config: DragBehavior;
-
-  constructor(options?: Config<DragBehavior>) {
-    this.el = shallowRef(null);
-    this.config = d3.drag<Element, undefined>();
-    if (options) options(this.config);
-    watch(this.el, el => { if (el) select(el).call(this.config); }, { immediate: true });
-  }
-
-  on(typenames: string): DragEventListener | undefined;
-  on(typenames: string, listener: null): this;
-  on(typenames: string, listener: DragEventListener): this;
-  on(...args: any[]): any {
-    let ret = this.config.on.apply(this.config, args as any);
-    return ret === this.config ? this : ret;
-  }
-
-  attachPos(pos: PosRefOptions): this;
-  attachPos(name: string, pos: PosRefOptions): this;
-  attachPos(...args: [PosRefOptions] | [string, PosRefOptions]): this {
-    let [name, pos] = args.length === 2 ? args : ['_pos', ...args];
-    this.on(`drag.${name}`, event => {
-      if (pos.x) pos.x.value += event.dx;
-      if (pos.y) pos.y.value += event.dy;
-    });
-    return this;
-  }
-};
-
 } // export namespace v
 
 /**
  * [自定义指令](https://cn.vuejs.org/guide/reusability/custom-directives)。
- * 将输入的`d3`交互对象作用于指定元素上。 
+ * 将输入的`d3`行为配置作用于指定元素上。
  */
-export function vD3Bind(el: Element, binding: v.BindBinding): void {
-  const receivers = binding.value instanceof Array ? binding.value : [binding.value];
-  receivers.map(receiver => receiver.el.value = el);
+export const vD3Apply = {
+  mounted: (el: Element, binding: v.ApplyBinding) => {
+    const fns = binding.value instanceof Array ? binding.value : [binding.value];
+    fns.forEach(fn => fn(d3.select(el)));
+  }
 }
 
 /**
  * [自定义指令](https://cn.vuejs.org/guide/reusability/custom-directives)。
  * 将输入的`d3`渲染函数作用于指定元素上。
+ * 
+ * 目前它是`v-d3-apply`的别名，这样做是为了可读性。
  */
-export function vD3Render(el: Element, binding: v.RenderBinding): void {
-  const renderer = binding.value;
-  renderer(d3.select(el));
-}
+export const vD3Render = vD3Apply;
 
 /**
  * [自定义指令](https://cn.vuejs.org/guide/reusability/custom-directives)。
@@ -168,6 +102,52 @@ export function vD3Raise(el: Element, binding: v.RaiseBinding): void {
 }
 
 export namespace d3u {
+
+export function zoomController<ZoomRefElement extends d3.ZoomedElementBaseType, Datum>(
+  behavior: d3ovr.ZoomBehavior<ZoomRefElement, Datum>
+) {
+  type Selection = d3.Selection<ZoomRefElement, Datum, null, undefined>;
+  type Transition = d3.Transition<ZoomRefElement, Datum, null, undefined>;
+
+  const controller = {
+    behavior,
+    selection: null as Selection | null,
+    state: shallowRef(d3.zoomIdentity),
+
+    transform: function (
+      newState: d3.ZoomTransform, point?: [number, number],
+      transitionOptions?: (t: Transition) => any
+    ) {
+      if (!this.selection) return;
+      if (transitionOptions) {
+        const transition = this.selection.transition();
+        transitionOptions(transition);
+        transition.call(this.behavior.transform, newState, point);
+      } else {
+        this.selection.call(this.behavior.transform, newState, point);
+      }
+    }
+  };
+
+  const eventName = '__update_state__';
+  const propName = '__zoom_state__';
+  if (!behavior.on(`zoom.${eventName}`)) {
+    behavior.on(`zoom.${eventName}`, function(event) {
+      const state = v.select(this).property(propName) as
+        typeof controller.state | undefined;
+      if (state) state.value = event.transform;
+    });
+  }
+
+  const apply = (selection: Selection) => {
+    const self = apply as typeof apply & typeof controller;
+    self.selection = selection
+      .property(propName, controller.state)
+      .call(behavior);
+    self.state.value = d3.zoomTransform(selection.node()!);
+  };
+  return Object.assign(apply, controller);
+}
 
 export function rangeGradientX(id: string, range: string[]) {
   return (selection: v.Selection<SVGDefsElement>) => {
