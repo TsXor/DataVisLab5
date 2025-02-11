@@ -64,19 +64,3 @@ export async function collectTrainGraph(): Promise<TrainGraphResult> {
   }
   return { success, data: G };
 }
-
-export function stationDegree(station: VertexOf<TrainGraph>) {
-  return station.in.size + station.out.size;
-}
-export function routeDegree(route: EdgeOf<TrainGraph>) {
-  return (stationDegree(route.source) + stationDegree(route.target)) / 2;
-}
-export function routeShiftApprox(route: EdgeOf<TrainGraph>) {
-  // 哦天哪我也不知道这是啥。
-  const whatIsThis = d3.min([route.data.shifts, 5])! + 1;
-  const whatIsThat = d3.min([(route.source.data.access + route.target.data.access) / 2, 31921.15])!;
-  return whatIsThis * whatIsThat;
-}
-
-export function routeDuration(route: EdgeOf<TrainGraph>) { return route.data.params[0]; }
-export function routeDistance(route: EdgeOf<TrainGraph>) { return route.data.params[1]; }

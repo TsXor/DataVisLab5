@@ -2,7 +2,8 @@ import { computed, proxyRefs, shallowRef, watch } from 'vue';
 import { defineStore } from 'pinia'
 import { useAsyncState } from '@vueuse/core';
 import { asSuccess } from './utils';
-import { collectMapData, collectTrainGraph, routeDistance, routeDuration, type TrainGraph } from './data-adapter';
+import { collectMapData, collectTrainGraph, type TrainGraph } from './data-adapter';
+import { routeDistance, routeDuration } from './data-utils';
 import { extractWeights, multiDijkstra, type PathEdge } from './graph/shortest-path';
 import type { EdgeOf } from './graph/graph';
 

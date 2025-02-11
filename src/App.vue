@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import InfoPanel from './components/InfoPanel.vue'
 import VisualPanel from './components/VisualPanel.vue';
-import DataSuspense from './components/DataSuspense.vue';
-import MapView from './components/MapView.vue';
-import GraphView from './components/GraphView.vue';
+import MultiGraph from './components/MultiGraph.vue';
 import MultiDensityCurve from './components/MultiDensityCurve.vue';
 import MultiHeatMap from './components/MultiHeatMap.vue';
 
@@ -21,11 +19,7 @@ import resIconHeatmap from '@/assets/img/heatmap.png'
     <div name="过滤器"><div v-html="resInfoFilter"/></div>
     <div name="参数"><div v-html="resInfoParam"/></div>
   </InfoPanel>
-  <DataSuspense id="map-view" v-slot="{ graph, map }">
-    <MapView :map="map" v-slot="{ transform, projection }">
-      <GraphView :graph="graph" :transform="transform" :projection="projection"/>
-    </MapView>
-  </DataSuspense>
+  <MultiGraph/>
   <!-- 右侧栏 -->
   <VisualPanel id="right-panel">
     <div :icon="resIconDensityCurve">

@@ -3,7 +3,8 @@ import * as d3 from 'd3';
 import { watch, type PropType } from 'vue';
 import { vD3Raise } from '@/vueshim/d3v';
 import type { EdgeOf, VertexOf } from '@/core/graph/graph';
-import { type TrainGraph, stationDegree, routeDegree, routeShiftApprox } from '@/core/data-adapter';
+import { type TrainGraph } from '@/core/data-adapter';
+import { stationDegree, routeDegree, routeShiftApprox, graphScalers } from '@/core/data-utils';
 import ColorLegend from './ColorLegend.vue';
 import WidthLegend from './WidthLegend.vue';
 import { svgu } from '@/vueshim/utils';
@@ -19,23 +20,7 @@ function projectedLine(points: [number, number][]) {
   return linear(points.map(p => transform.apply(projection(p)!)));
 }
 
-// TODO: 根据数据范围动态决定下列比例尺。
-
-const nodeRadiusScale = d3.scaleLinear<number>()
-  .domain([0, 15])
-  .range([5, 15]);
-
-const nodeColorScale = d3.scaleLinear<string>()
-  .domain([10000, 25000]) // 假设节点的数量在 0 到 100 之间
-  .range(["steelblue", "tomato"]);
-
-const lineWidthScale = d3.scaleLinear<number>()
-  .domain([0, 30]) // 假设节点的数量在 0 到 100 之间
-  .range([1.5, 10.5]);
-
-const lineColorScale = d3.scaleLinear<string>()
-  .domain([10000, 160000])
-  .range(["steelblue", "tomato"]);
+const scalers = $computed(() => graphScalers(graph));
 
 type GVertex = VertexOf<typeof graph>;
 type GEdge = EdgeOf<typeof graph>;
@@ -63,11 +48,11 @@ function toggleChosenRoute(id: GEdge) { chosenRoute = chosenRoute === id ? null 
   <g class="lines">
     <path v-if="chosenRoute" class="route-highlight"
       :d="projectedLine([chosenRoute.source.data.geo, chosenRoute.target.data.geo])!"
-      :stroke-width="(lineWidthScale(routeDegree(chosenRoute)) + 5)"
+      :stroke-width="(scalers.lineWidth(routeDegree(chosenRoute)) + 5)"
     />
     <g v-for="edge in graph.outOrderEdges()"
-      :stroke-width="lineWidthScale(routeDegree(edge))"
-      :stroke="lineColorScale(routeShiftApprox(edge))"
+      :stroke-width="scalers.lineWidth(routeDegree(edge))"
+      :stroke="scalers.lineColor(routeShiftApprox(edge))"
       v-d3-raise="isHoveredRoute(edge)">
       <path class="route"
         :class="{
@@ -94,7 +79,7 @@ function toggleChosenRoute(id: GEdge) { chosenRoute = chosenRoute === id ? null 
         @mouseover.stop="hoveredStation = vertex"
         @mouseout.stop="hoveredStation = null">
         <rect class="station-text-bg"
-          :x="nodeRadiusScale(stationDegree(vertex))" :y="-10"
+          :x="scalers.nodeRadius(stationDegree(vertex))" :y="-10"
           :width="50" :height="20"
           :rx="5" :ry="5"
         />
@@ -102,18 +87,18 @@ function toggleChosenRoute(id: GEdge) { chosenRoute = chosenRoute === id ? null 
           @click.prevent.stop="toggleChosenSource(vertex)"
           @contextmenu.prevent.stop="toggleChosenTarget(vertex)"
           :stroke-width="2"
-          :r="nodeRadiusScale(stationDegree(vertex))" 
-          :fill="nodeColorScale(vertex.data.access)"
+          :r="scalers.nodeRadius(stationDegree(vertex))" 
+          :fill="scalers.nodeColor(vertex.data.access)"
         />
         <text class="station-text"
           cursor="pointer" text-anchor="middle"
-          :x="(25 + nodeRadiusScale(stationDegree(vertex)))" :y="3.5"
+          :x="(25 + scalers.nodeRadius(stationDegree(vertex)))" :y="3.5"
           :font-size="`${12}px`" v-text="vertex.data.name"/>
       </g>
     </g>
   </g>
   <g class="legends">
-    <ColorLegend :scaler="nodeColorScale"
+    <ColorLegend :scaler="scalers.nodeColor"
       :transform="svgu.translate(20, 20)"
       :icon-width="20" :icon-height="15"
       caption="节点颜色：年均到达人数（单位：万人）">
@@ -124,7 +109,7 @@ function toggleChosenRoute(id: GEdge) { chosenRoute = chosenRoute === id ? null 
         <circle cx="10" cy="7.5" r="7" :fill="color"/>
       </template>
     </ColorLegend>
-    <ColorLegend :scaler="lineColorScale"
+    <ColorLegend :scaler="scalers.lineColor"
       :transform="svgu.translate(20, 80)"
       :icon-width="20" :icon-height="15"
       caption="边颜色：年均客流量（单位：万人）">
@@ -135,7 +120,7 @@ function toggleChosenRoute(id: GEdge) { chosenRoute = chosenRoute === id ? null 
         <line x1="4.5" y1="13" x2="15.5" y2="2" stroke-width="2" :stroke="color"/>
       </template>
     </ColorLegend>
-    <WidthLegend :scaler="nodeRadiusScale"
+    <WidthLegend :scaler="scalers.nodeRadius"
       :transform="svgu.translate(20, 140)"
       :icon-width="20" :icon-height="15"
       caption="节点宽度：节点的度">
@@ -146,7 +131,7 @@ function toggleChosenRoute(id: GEdge) { chosenRoute = chosenRoute === id ? null 
         <circle cx="10" cy="7.5" fill="#ffd" stroke="#000" :r="size / 2"/>
       </template>
     </WidthLegend>
-    <WidthLegend :scaler="lineWidthScale"
+    <WidthLegend :scaler="scalers.lineWidth"
       :transform="svgu.translate(20, 200)"
       :icon-width="20" :icon-height="15"
       caption="边宽度：边的度（两端节点的平均度数）">
