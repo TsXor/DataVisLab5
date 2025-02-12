@@ -61,8 +61,8 @@ export class Graph<V, E> {
   }
 
   delVertex(vertex: Vertex<V, E>) {
-    vertex.out.clear();
-    vertex.in.clear();
+    for (const e of vertex.out.values()) { e.detach(); }
+    for (const e of vertex.in.values()) { e.detach(); }
     this.vertices.delete(vertex.id);
   }
 
