@@ -1,4 +1,4 @@
-import { Fragment, type Ref, type ShallowRef, type VNode, type WritableComputedRef } from 'vue';
+import { Fragment, type DirectiveBinding, type Ref, type ShallowRef, type VNode, type WritableComputedRef } from 'vue';
 
 /**
  * Vue的slot函数在某些情况下会返回Fragment，使用此函数展平它们。
@@ -90,3 +90,15 @@ export function calcTextbox(lines: string[], textSize: number, lineHeight: numbe
   const height = truncLines.length * lineHeight;
   return { width, height, truncLines };
 }
+
+export type RelyBinding = DirectiveBinding<
+  any[],
+  never,
+  never
+>;
+
+/**
+ * [自定义指令](https://cn.vuejs.org/guide/reusability/custom-directives)。
+ * 没有任何效果，其作用在于让组件依赖某个响应值。
+ */
+export function vRely(el: Element, binding: RelyBinding): void {}

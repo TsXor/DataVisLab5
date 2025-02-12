@@ -7,23 +7,12 @@ const emit = defineEmits<{
   focusRegion: [bounds?: [[number, number], [number, number]], event?: MouseEvent];
 }>();
 
-defineSlots<{
-  default(props: { projection: d3.GeoProjection }): any
-}>();
-
-const { transform, mapCenter, mapScale } = defineProps({
+const { transform, projection } = defineProps({
   transform: { type: Object as PropType<d3.ZoomTransform>, required: true },
-  mapCenter: { type: Object as PropType<[number, number]>, default: [100, 38] },
-  mapScale: { type: Number, default: 800 },
+  projection: { type: Function as PropType<d3.GeoProjection>, required: true },
   map: { type: Object as PropType<render.MapData>, required: true },
 });
 
-const projection = $computed(() => {
-  return d3.geoMercator()
-    .center(mapCenter) /* 设置地图的中心（可以根据数据调整） */
-    .scale(mapScale) /* 缩放级别（根据数据调整） */
-    .translate([0, 0]) /* 不平移 */;
-});
 const geoPath = $computed(() => d3.geoPath(projection));
 
 // 此处必须为shallowRef，否则region会被递归转换，导致判等失效。
@@ -74,7 +63,6 @@ watch($$(focusedRegion), focus => {
       </g>
     </g>
   </g>
-  <slot :projection="projection"/>
 </template>
 
 <style scoped>
