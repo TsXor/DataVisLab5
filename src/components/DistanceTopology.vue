@@ -128,8 +128,7 @@ defineExpose({
         :class="{ hovered: isHoveredRoute(edge) }"
         :d="linkLine(edge)!"
         @mouseover.stop="hoveredRoute = edge"
-        @mouseout.stop="hoveredRoute = null"
-      />
+        @mouseout.stop="hoveredRoute = null"/>
     </g>
   </g>
   <g class="nodes" v-rely="[tick]">
@@ -143,13 +142,11 @@ defineExpose({
         <rect class="station-text-bg"
           :x="scalers.nodeRadius(stationDegree(vertex))" :y="-10"
           :width="50" :height="20"
-          :rx="5" :ry="5"
-        />
+          :rx="5" :ry="5"/>
         <circle class="station-point" v-d3-apply="drag.apply(vertex)"
           :stroke-width="2"
           :r="scalers.nodeRadius(stationDegree(vertex))" 
-          :fill="scalers.nodeColor(vertex.data.access)"
-        />
+          :fill="scalers.nodeColor(vertex.data.access)"/>
         <text class="station-text"
           cursor="pointer" text-anchor="middle"
           :x="(25 + scalers.nodeRadius(stationDegree(vertex)))" :y="3.5"

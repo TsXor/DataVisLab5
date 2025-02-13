@@ -69,21 +69,18 @@ function toggleChosenRoute(id: GEdge) { chosenRoute = chosenRoute === id ? null 
           @click.stop="toggleChosenRoute(edge)"
           :d="routeLine(edge)"
           @mouseover.stop="hoveredRoute = edge"
-          @mouseout.stop="hoveredRoute = null"
-        />
+          @mouseout.stop="hoveredRoute = null"/>
       </g>
     </g>
     <g>
       <path class="route highlight shortest" v-for="trace in globalSelection.pathEdges.keys()"
         @click.stop="toggleChosenRoute(trace)"
         :d="routeLine(trace)"
-        :stroke-width="(scalers.lineWidth(routeDegree(trace)) + 5)"
-      />
+        :stroke-width="(scalers.lineWidth(routeDegree(trace)) + 5)"/>
       <path class="route highlight chosen" v-if="chosenRoute"
         @click.stop="toggleChosenRoute(chosenRoute)"
         :d="routeLine(chosenRoute)"
-        :stroke-width="(scalers.lineWidth(routeDegree(chosenRoute)) + 5)"
-      />
+        :stroke-width="(scalers.lineWidth(routeDegree(chosenRoute)) + 5)"/>
       <!-- 单独显示选中的边 -->
       <path class="route chosen" v-if="chosenRoute"
         :class="{ hovered: isHoveredRoute(chosenRoute) }"
@@ -92,8 +89,7 @@ function toggleChosenRoute(id: GEdge) { chosenRoute = chosenRoute === id ? null 
         :stroke-width="scalers.lineWidth(routeDegree(chosenRoute))"
         :stroke="scalers.lineColor(routeShiftApprox(chosenRoute))"
         @mouseover.stop="hoveredRoute = chosenRoute"
-        @mouseout.stop="hoveredRoute = null"
-      />
+        @mouseout.stop="hoveredRoute = null"/>
     </g>
   </g>
   <g class="nodes">
@@ -111,15 +107,13 @@ function toggleChosenRoute(id: GEdge) { chosenRoute = chosenRoute === id ? null 
         <rect class="station-text-bg"
           :x="scalers.nodeRadius(stationDegree(vertex))" :y="-10"
           :width="50" :height="20"
-          :rx="5" :ry="5"
-        />
+          :rx="5" :ry="5"/>
         <circle class="station-point"
           @click.prevent.stop="toggleChosenSource(vertex)"
           @contextmenu.prevent.stop="toggleChosenTarget(vertex)"
           :stroke-width="2"
           :r="scalers.nodeRadius(stationDegree(vertex))" 
-          :fill="scalers.nodeColor(vertex.data.access)"
-        />
+          :fill="scalers.nodeColor(vertex.data.access)"/>
         <text class="station-text"
           cursor="pointer" text-anchor="middle"
           :x="(25 + scalers.nodeRadius(stationDegree(vertex)))" :y="3.5"
