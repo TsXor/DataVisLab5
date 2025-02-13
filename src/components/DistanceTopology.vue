@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import * as d3 from 'd3';
-import { watch, type PropType } from 'vue';
+import { shallowReactive, watch, type PropType } from 'vue';
 import { type TrainGraph } from '@/core/data-adapter';
 import { graphScalers, routeDegree, routeDistance, routeShiftApprox, stationDegree } from '@/core/data-utils';
 import type { EdgeOf, VertexOf } from '@/core/graph/graph';
@@ -44,7 +44,7 @@ function linkLine(link: LinkDatum) {
   return linear(points.map(p => transform.apply(p)));
 }
 
-const drag = {
+const drag = shallowReactive({
   node: null as NodeDatum | null,
   target: null as { x: number, y: number } | null,
   force: (strength: number) => {
@@ -76,7 +76,7 @@ const drag = {
       selection.datum(node).call(drag.behaviour);
     };
   }
-};
+});
 
 const linkForce = $computed(() => {
   const links = Array.from(graph.outOrderEdges());
@@ -136,7 +136,10 @@ defineExpose({
       :transform="svgu.translateOf(nodePosition(vertex))"
       v-d3-raise="isHoveredStation(vertex)">
       <g class="station"
-        :class="{ hovered: isHoveredStation(vertex) }"
+        :class="{
+          hovered: isHoveredStation(vertex),
+          dragged: vertex === drag.node,
+        }"
         @mouseover.stop="hoveredStation = vertex"
         @mouseout.stop="hoveredStation = null">
         <rect class="station-text-bg"
@@ -168,5 +171,11 @@ defineExpose({
 
 .station-point {
   stroke: white;
+  cursor: grab;
+}
+
+.station.dragged > .station-point {
+  stroke: red;
+  cursor: grabbing;
 }
 </style>
