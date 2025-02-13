@@ -7,10 +7,11 @@ import type { EdgeOf, VertexOf } from '@/core/graph/graph';
 import { d3ovr, vD3Apply, vD3Raise, type v } from '@/vueshim/d3v';
 import { svgu, vRely } from '@/vueshim/utils';
 
-const { transform, projection, graph } = defineProps({
+const { transform, projection, graph, container } = defineProps({
   transform: { type: Object as PropType<d3.ZoomTransform>, required: true },
   projection: { type: Function as PropType<d3.GeoProjection>, required: true },
   graph: { type: Object as PropType<TrainGraph>, required: true },
+  container: { type: Object as PropType<SVGSVGElement | null>, required: true },
 });
 
 const linear = d3.line();
@@ -46,7 +47,7 @@ function linkLine(link: LinkDatum) {
 
 const drag = shallowReactive({
   node: null as NodeDatum | null,
-  target: null as { x: number, y: number } | null,
+  target: null as d3.SubjectPosition | null,
   force: (strength: number) => {
     return (() => {
       if (drag.node && drag.target) {
@@ -57,16 +58,20 @@ const drag = shallowReactive({
       }
     }) as d3.Force<NodeDatum, LinkDatum>;
   },
-  behaviour: d3ovr.drag<Element, NodeDatum, NodeDatum>()
-    .on("start", event => {
-      drag.node = event.subject;
-      drag.target = { x: event.x, y: event.y };
+  behaviour: d3ovr.drag<Element, NodeDatum, d3.SubjectPosition>()
+    .container(function () { return container ?? this.parentElement!; })
+    .subject((_, datum) => ({ x: datum.x ?? 0, y: datum.y ?? 0 }))
+    .on("start", (event, datum) => {
+      drag.node = datum;
+      drag.target = event.subject;
       simulation.alphaTarget(0.3).restart();
     })
-    .on("drag", event => {
-      drag.target = { x: event.x, y: event.y };
+    .on("drag", (event) => {
+      event.subject.x += event.dx / transform.k;
+      event.subject.y += event.dy / transform.k;
+      drag.target = event.subject;
     })
-    .on("end", event => {
+    .on("end", () => {
       drag.node = null;
       drag.target = null;
       simulation.alphaTarget(0);
@@ -157,6 +162,8 @@ defineExpose({
       </g>
     </g>
   </g>
+  <circle class="indicator" v-if="drag.node" :r="15"
+    :transform="svgu.translateOf(transform.apply([drag.target!.x, drag.target!.y]))"/>
 </template>
 
 <style scoped>
@@ -176,6 +183,12 @@ defineExpose({
 
 .station.dragged > .station-point {
   stroke: red;
+  cursor: grabbing;
+}
+
+.indicator {
+  fill: yellow;
+  opacity: 0.5;
   cursor: grabbing;
 }
 </style>

@@ -102,3 +102,19 @@ export type RelyBinding = DirectiveBinding<
  * 没有任何效果，其作用在于让组件依赖某个响应值。
  */
 export function vRely(el: Element, binding: RelyBinding): void {}
+
+export type ElRefBinding = DirectiveBinding<
+  (el: Element) => any,
+  never,
+  never
+>;
+
+/**
+ * [自定义指令](https://cn.vuejs.org/guide/reusability/custom-directives)。
+ * 绑定某个元素而非子组件的引用。
+ */
+export const vElRef = {
+  mounted: (el: Element, binding: ElRefBinding) => {
+    binding.value(el);
+  }
+}

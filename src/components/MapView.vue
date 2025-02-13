@@ -4,7 +4,7 @@ import { watch, type PropType } from 'vue';
 import type { data, render } from '@/core/dtypes';
 
 const emit = defineEmits<{
-  focusRegion: [bounds?: [[number, number], [number, number]], event?: MouseEvent];
+  focusRegion: [bounds?: [[number, number], [number, number]]];
 }>();
 
 const { transform, projection } = defineProps({
@@ -16,16 +16,12 @@ const { transform, projection } = defineProps({
 const geoPath = $computed(() => d3.geoPath(projection));
 
 // 此处必须为shallowRef，否则region会被递归转换，导致判等失效。
-let focusedRegion = $shallowRef<{region: data.Region, event: MouseEvent} | null>(null);
-function isFocusedRegion(region: data.Region) { return focusedRegion?.region === region; }
-function toggleFocusedRegion(event: MouseEvent, region: data.Region) {
-  focusedRegion = isFocusedRegion(region) ? null : { region, event };
-}
+let focusedRegion = $shallowRef<data.Region | null>(null);
+function isFocusedRegion(region: data.Region) { return focusedRegion === region; }
+function toggleFocusedRegion(region: data.Region) { focusedRegion = focusedRegion === region ? null : region; }
+
 // 在省份注意点转换时，执行缩放
-watch($$(focusedRegion), focus => {
-  if (focus) emit('focusRegion', geoPath.bounds(focus.region), focus.event);
-  else emit('focusRegion');
-});
+watch($$(focusedRegion), region => emit('focusRegion', region ? geoPath.bounds(region) : undefined));
 </script>
 
 <template>
@@ -55,7 +51,7 @@ watch($$(focusedRegion), focus => {
           <template v-for="feat in map.provinces.features" v-memo="[isFocusedRegion(feat)]">
             <path class="precise-border" :d="geoPath(feat)!"
               :class="{ focused: isFocusedRegion(feat) }"
-              @click.stop="event => toggleFocusedRegion(event, feat)">
+              @click.stop="toggleFocusedRegion(feat)">
               <title :text="feat.properties.name"/>
             </path>
           </template>

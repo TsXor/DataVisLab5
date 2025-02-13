@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import * as d3 from 'd3';
-import { ref, type PropType } from 'vue';
+import { ref, shallowRef, type PropType } from 'vue';
 import { d3ovr, d3u, vD3Apply } from '@/vueshim/d3v';
-import { svgu } from '@/vueshim/utils';
+import { svgu, vElRef } from '@/vueshim/utils';
 import DataSuspense from './DataSuspense.vue';
 import MapView from './MapView.vue';
 import GraphView from './GraphView.vue';
 import DistanceTopology from './DistanceTopology.vue';
+
+const container = shallowRef<SVGSVGElement | null>(null);
 
 const { viewSize, mapCenter, mapScale } = defineProps({
   viewSize: { type: Object as PropType<[number, number]>, default: [975, 700] },
@@ -21,7 +23,7 @@ const viewBox = $computed(() => {
   return svgu.viewbox(0, 0, width, height);
 });
 
-const zoom = d3u.zoomController(d3ovr.zoom().scaleExtent([0.01, 8]));
+const zoom = d3u.zoomController(d3ovr.zoom().extent([[0, 0], viewSize]).scaleExtent([0.01, 8]));
 const transform = $(zoom.state);
 const toMiddle = () => {
   const [width, height] = viewSize;
@@ -39,12 +41,12 @@ function resetZoom() {
   const [width, height] = viewSize;
   zoom.transform(
     d3.zoomIdentity.translate(width / 2, height / 2),
-    transform.invert([width / 2, height / 2]),
+    [width / 2, height / 2],
     t => t.duration(750),
   );
 }
 
-function focusRegion(bounds?: [[number, number], [number, number]], event?: MouseEvent) {
+function focusRegion(bounds?: [[number, number], [number, number]]) {
   const [width, height] = viewSize;
   const zoomLimit = 8;
   const zoomBase = 0.9;
@@ -54,7 +56,7 @@ function focusRegion(bounds?: [[number, number], [number, number]], event?: Mous
       d3.zoomIdentity.translate(width / 2, height / 2)
         .scale(Math.min(zoomLimit, zoomBase / Math.max((x1 - x0) / width, (y1 - y0) / height))) 
         .translate(-(x0 + x1) / 2, -(y0 + y1) / 2),
-      event ? d3.pointer(event, zoom.selection!.node()) : undefined,
+      transform.apply([(x0 + x1) / 2, (y0 + y1) / 2]),
       t => t.duration(750),
     );
   } else { // 重置缩放
@@ -77,14 +79,16 @@ function focusRegion(bounds?: [[number, number], [number, number]], event?: Mous
     </div>
     <DataSuspense v-slot="{ graph, map }">
       <div class="aligner">
-        <svg :viewBox="viewBox" @contextmenu.prevent v-d3-apply="[zoom, toMiddle]">
+        <svg :viewBox="viewBox" @contextmenu.prevent v-d3-apply="[zoom, toMiddle]"
+          v-el-ref="(el: SVGSVGElement) => container = el">
           <g v-show="selected === 'map'">
             <MapView :map="map" :transform="transform" :projection="projection"
-              @focusRegion="(bounds, event) => focusRegion(bounds, event)"/>
+              @focusRegion="bounds => focusRegion(bounds)"/>
             <GraphView :graph="graph" :transform="transform" :projection="projection"/>
           </g>
           <g v-show="selected === 'dist'">
-            <DistanceTopology ref="topo" :graph="graph" :transform="transform" :projection="projection"/>
+            <DistanceTopology ref="topo" :graph="graph" :transform="transform" :projection="projection"
+              :container="container"/>
           </g>
         </svg>
       </div>
