@@ -8,6 +8,9 @@ import { stationDegree, routeDegree, routeShiftApprox, graphScalers } from '@/co
 import ColorLegend from './ColorLegend.vue';
 import WidthLegend from './WidthLegend.vue';
 import { svgu } from '@/vueshim/utils';
+import { useSelectionStore } from '@/core/store';
+
+const globalSelection = useSelectionStore();
 
 const { transform, projection, graph } = defineProps({
   transform: { type: Object as PropType<d3.ZoomTransform>, required: true },
@@ -24,6 +27,14 @@ const scalers = $computed(() => graphScalers(graph));
 
 type GVertex = VertexOf<typeof graph>;
 type GEdge = EdgeOf<typeof graph>;
+
+function stationPosition(station: GVertex) {
+  return transform.apply(projection(station.data.geo)!);
+}
+
+function routeLine(route: GEdge) {
+  return projectedLine([route.source.data.geo, route.target.data.geo])!;
+}
 
 // 此处必须为shallowRef，否则vertex会被递归转换，导致判等失效。
 let hoveredStation = $shallowRef<GVertex | null>(null);
@@ -46,29 +57,48 @@ function toggleChosenRoute(id: GEdge) { chosenRoute = chosenRoute === id ? null 
 
 <template>
   <g class="lines">
-    <path v-if="chosenRoute" class="route-highlight"
-      :d="projectedLine([chosenRoute.source.data.geo, chosenRoute.target.data.geo])!"
-      :stroke-width="(scalers.lineWidth(routeDegree(chosenRoute)) + 5)"
-    />
-    <g v-for="edge in graph.outOrderEdges()"
-      :stroke-width="scalers.lineWidth(routeDegree(edge))"
-      :stroke="scalers.lineColor(routeShiftApprox(edge))"
-      v-d3-raise="isHoveredRoute(edge)">
-      <path class="route"
-        :class="{
-          hovered: isHoveredRoute(edge),
-          chosen: isChosenRoute(edge),
-        }"
-        @click.stop="toggleChosenRoute(edge)"
-        :d="projectedLine([edge.source.data.geo, edge.target.data.geo])!"
-        @mouseover.stop="hoveredRoute = edge"
+    <g>
+      <!-- 将不常更新的属性提升，以减少更新开销 -->
+      <g v-for="edge in graph.outOrderEdges()"
+        :stroke-width="scalers.lineWidth(routeDegree(edge))"
+        :stroke="scalers.lineColor(routeShiftApprox(edge))"
+        v-d3-raise="isHoveredRoute(edge)">
+        <!-- 隐藏选中的边 -->
+        <path class="route" v-show="edge !== chosenRoute"
+          :class="{ hovered: isHoveredRoute(edge) }"
+          @click.stop="toggleChosenRoute(edge)"
+          :d="routeLine(edge)"
+          @mouseover.stop="hoveredRoute = edge"
+          @mouseout.stop="hoveredRoute = null"
+        />
+      </g>
+    </g>
+    <g>
+      <path class="route highlight shortest" v-for="trace in globalSelection.pathEdges.keys()"
+        @click.stop="toggleChosenRoute(trace)"
+        :d="routeLine(trace)"
+        :stroke-width="(scalers.lineWidth(routeDegree(trace)) + 5)"
+      />
+      <path class="route highlight chosen" v-if="chosenRoute"
+        @click.stop="toggleChosenRoute(chosenRoute)"
+        :d="routeLine(chosenRoute)"
+        :stroke-width="(scalers.lineWidth(routeDegree(chosenRoute)) + 5)"
+      />
+      <!-- 单独显示选中的边 -->
+      <path class="route chosen" v-if="chosenRoute"
+        :class="{ hovered: isHoveredRoute(chosenRoute) }"
+        @click.stop="toggleChosenRoute(chosenRoute)"
+        :d="routeLine(chosenRoute)"
+        :stroke-width="scalers.lineWidth(routeDegree(chosenRoute))"
+        :stroke="scalers.lineColor(routeShiftApprox(chosenRoute))"
+        @mouseover.stop="hoveredRoute = chosenRoute"
         @mouseout.stop="hoveredRoute = null"
       />
     </g>
   </g>
   <g class="nodes">
     <g v-for="vertex in graph.vertices.values()"
-      :transform="svgu.translateOf(transform.apply(projection(vertex.data.geo)!))"
+      :transform="svgu.translateOf(stationPosition(vertex))"
       v-d3-raise="isHoveredStation(vertex)">
       <g class="station"
         :class="{
@@ -157,6 +187,7 @@ function toggleChosenRoute(id: GEdge) { chosenRoute = chosenRoute === id ? null 
 
 .station-point {
   stroke: white;
+  cursor: pointer;
 }
 
 .station.chosen-src > .station-point {
@@ -170,11 +201,18 @@ function toggleChosenRoute(id: GEdge) { chosenRoute = chosenRoute === id ? null 
 .route {
   fill: none;
   opacity: 0.7;
+  cursor: pointer;
 }
 
-.route-highlight {
-  fill: none;
+.route.highlight {
+  opacity: 0.5;
+}
+
+.route.highlight.chosen {
   stroke: yellow;
-  opacity: 1;
+}
+
+.route.highlight.shortest {
+  stroke: red;
 }
 </style>

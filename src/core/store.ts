@@ -4,7 +4,7 @@ import { useAsyncState } from '@vueuse/core';
 import { asSuccess } from './utils';
 import { collectMapData, collectTrainGraph, type TrainGraph } from './data-adapter';
 import { routeDistance, routeDuration } from './data-utils';
-import { extractWeights, multiDijkstra, type PathEdge } from './graph/shortest-path';
+import { extractWeights, multiDijkstra, walkPathEdges, type PathEdge } from './graph/shortest-path';
 import type { EdgeOf } from './graph/graph';
 
 
@@ -48,5 +48,19 @@ export const useSelectionStore = defineStore('selectionEdge', () => {
     type: 'distance' as PathType,
     edge: null as PathEdge | null,
   });
-  return { path };
+  const graph = useGraphStore();
+  const pathEdges = computed(() => {
+    const edge = path.value.edge;
+    if (!edge || !graph.graph)
+      return new Map<EdgeOf<TrainGraph>, PathEdge>();
+    return new Map((function* () {
+      for (const we of walkPathEdges(edge)) {
+        const src = graph.graph!.getVertex(we.source.id)!;
+        const dst = graph.graph!.getVertex(we.target.id)!;
+        const edge = graph.graph!.getEdge(src, dst)!;
+        yield [edge, we];
+      }
+    })());
+  });
+  return { path, pathEdges };
 });

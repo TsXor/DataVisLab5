@@ -72,7 +72,6 @@ watch($$(focusedRegion), focus => {
 }
 
 .precise-border {
-  cursor: pointer;
   fill: rgba(128, 128, 128, 0.2);
   stroke: #444;
 }
