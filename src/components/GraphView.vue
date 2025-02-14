@@ -4,7 +4,7 @@ import { watch, type PropType } from 'vue';
 import { vD3Raise } from '@/vueshim/d3v';
 import type { EdgeOf, VertexOf } from '@/core/graph/graph';
 import { type TrainGraph } from '@/core/data-adapter';
-import { stationDegree, routeDegree, routeShiftApprox, graphScalers } from '@/core/data-utils';
+import { stationDegree, routeDegree, routeShiftApprox, type Scalers } from '@/core/data-utils';
 import ColorLegend from './ColorLegend.vue';
 import WidthLegend from './WidthLegend.vue';
 import { svgu } from '@/vueshim/utils';
@@ -12,18 +12,17 @@ import { useSelectionStore } from '@/core/store';
 
 const globalSelection = useSelectionStore();
 
-const { transform, projection, graph } = defineProps({
+const { transform, projection, graph, scalers } = defineProps({
   transform: { type: Object as PropType<d3.ZoomTransform>, required: true },
   projection: { type: Function as PropType<d3.GeoProjection>, required: true },
   graph: { type: Object as PropType<TrainGraph>, required: true },
+  scalers: { type: Object as PropType<Scalers>, required: true },
 });
 
 const linear = d3.line();
 function projectedLine(points: [number, number][]) {
   return linear(points.map(p => transform.apply(projection(p)!)));
 }
-
-const scalers = $computed(() => graphScalers(graph));
 
 type GVertex = VertexOf<typeof graph>;
 type GEdge = EdgeOf<typeof graph>;

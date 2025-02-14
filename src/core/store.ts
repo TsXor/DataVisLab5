@@ -1,20 +1,20 @@
-import { computed, proxyRefs, shallowRef, watch } from 'vue';
+import { computed, shallowRef, watch } from 'vue';
 import { defineStore } from 'pinia'
 import { useAsyncState } from '@vueuse/core';
 import { asSuccess } from './utils';
 import { collectMapData, collectTrainGraph, type TrainGraph } from './data-adapter';
-import { routeDistance, routeDuration } from './data-utils';
+import { graphExtents, routeDistance, routeDuration } from './data-utils';
 import { extractWeights, multiDijkstra, walkPathEdges, type PathEdge } from './graph/shortest-path';
 import type { EdgeOf } from './graph/graph';
 
 
 export const useRemoteDataStore = defineStore('remoteData', () => {
-  const map = proxyRefs(useAsyncState(collectMapData(), null));
-  const graph = proxyRefs(useAsyncState(collectTrainGraph(), null));
-  const isReady = computed(() =>
+  const map = useAsyncState(collectMapData(), null);
+  const graph = useAsyncState(collectTrainGraph(), null);
+  const isReady = computed(() => Boolean(
     graph.isReady && map.isReady &&
-    graph.state!.success && map.state!.success
-  );
+    graph.state.value?.success && map.state.value?.success
+  ));
   return { map, graph, isReady };
 });
 
@@ -39,7 +39,9 @@ export const useGraphStore = defineStore('graph', () => {
   }
   const distance = shortestPath(routeDistance);
   const duration = shortestPath(routeDuration);
-  return { graph, distance, duration };
+  const extents = computed(() => graph.value ? graphExtents(graph.value) : null);
+  const isReady = computed(() => Boolean(graph.value && extents.value));
+  return { graph, distance, duration, extents, isReady };
 });
 
 export type PathType = 'distance' | 'duration';

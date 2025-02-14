@@ -3,9 +3,10 @@ import { asSuccess } from '@/core/utils';
 import { type TrainGraph } from '@/core/data-adapter';
 import type { render } from '@/core/dtypes';
 import { useGraphStore, useRemoteDataStore } from '@/core/store';
+import type { DataExtents } from '@/core/data-utils';
 
 defineSlots<{
-  default(props: { graph: TrainGraph; map: render.MapData }): any
+  default(props: { graph: TrainGraph; map: render.MapData, extents: DataExtents }): any
 }>();
 
 const data = useRemoteDataStore();
@@ -14,8 +15,8 @@ const graph = useGraphStore();
 
 <template>
   <div>
-    <template v-if="data.isReady && graph.graph">
-      <slot :graph="graph.graph" :map="asSuccess(data.map.state!)"/>
+    <template v-if="data.isReady && graph.isReady">
+      <slot :graph="graph.graph!" :map="asSuccess(data.map.state!)" :extents="graph.extents!"/>
     </template>
     <div v-else class="message">
       <p>加载状态：</p>

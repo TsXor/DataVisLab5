@@ -18,13 +18,42 @@ export function routeShiftApprox(route: EdgeOf<TrainGraph>) {
 export function routeDuration(route: EdgeOf<TrainGraph>) { return route.data.params[0]; }
 export function routeDistance(route: EdgeOf<TrainGraph>) { return route.data.params[1]; }
 
-export function graphScalers(graph: TrainGraph) {
-  // TODO: 根据数据范围动态决定下列比例尺。
+export type DataExtents = {
+  stationDegree: [number, number];
+  stationAccess: [number, number];
+  routeDegree: [number, number];
+  routeShift: [number, number];
+};
+
+export function graphExtents(graph: TrainGraph) {
   return {
-    nodeRadius: d3.scaleLinear<number>().domain([0, 15]).range([5, 15]),
-    nodeColor: d3.scaleLinear<string>().domain([10000, 25000]).range(["steelblue", "tomato"]),
-    lineWidth: d3.scaleLinear<number>().domain([0, 30]).range([1.5, 10.5]),
-    lineColor: d3.scaleLinear<string>().domain([10000, 160000]).range(["steelblue", "tomato"]),
+    stationDegree: d3.extent(graph.vertices.values(), stationDegree),
+    stationAccess: d3.extent(graph.vertices.values(), v => v.data.access),
+    routeDegree: d3.extent(graph.outOrderEdges(), routeDegree),
+    routeShift: d3.extent(graph.outOrderEdges(), routeShiftApprox),
+  } as DataExtents;
+}
+
+export type ScaleRanges = {
+  nodeRadius: [number, number],
+  nodeColor: [string, string],
+  lineWidth: [number, number],
+  lineColor: [string, string],
+};
+
+export type Scalers = {
+  nodeRadius: d3.ScaleLinear<number, number>;
+  nodeColor: d3.ScaleLinear<string, string>;
+  lineWidth: d3.ScaleLinear<number, number>;
+  lineColor: d3.ScaleLinear<string, string>;
+};
+
+export function graphScalers(extents: DataExtents, ranges: ScaleRanges) {
+  return {
+    nodeRadius: d3.scaleLinear<number>(extents.stationDegree, ranges.nodeRadius),
+    nodeColor: d3.scaleLinear<string>(extents.stationAccess, ranges.nodeColor),
+    lineWidth: d3.scaleLinear<number>(extents.routeDegree, ranges.lineWidth),
+    lineColor: d3.scaleLinear<string>(extents.routeShift, ranges.lineColor),
   }
 }
 

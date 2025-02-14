@@ -1,12 +1,20 @@
 <script setup lang="ts">
 import * as d3 from 'd3';
 import { ref, shallowRef, type PropType } from 'vue';
+import { graphScalers, type ScaleRanges } from '@/core/data-utils'; 
 import { d3ovr, d3u, vD3Apply } from '@/vueshim/d3v';
 import { svgu, vElRef } from '@/vueshim/utils';
 import DataSuspense from './DataSuspense.vue';
 import MapView from './MapView.vue';
 import GraphView from './GraphView.vue';
 import DistanceTopology from './DistanceTopology.vue';
+
+const ranges: ScaleRanges = {
+  nodeRadius: [5, 15],
+  nodeColor: ["steelblue", "tomato"],
+  lineWidth: [1.5, 10.5],
+  lineColor: ["steelblue", "tomato"],
+};
 
 const container = shallowRef<SVGSVGElement | null>(null);
 
@@ -77,18 +85,19 @@ function focusRegion(bounds?: [[number, number], [number, number]]) {
       <button class="topo-reseter" v-show="selected === 'dist'"
         @click="$refs.topo?.reset()" v-text="'重置距离拓扑'"/>
     </div>
-    <DataSuspense v-slot="{ graph, map }">
+    <DataSuspense v-slot="{ graph, map, extents }">
       <div class="aligner">
         <svg :viewBox="viewBox" @contextmenu.prevent v-d3-apply="[zoom, toMiddle]"
           v-el-ref="(el: SVGSVGElement) => container = el">
           <g v-show="selected === 'map'">
             <MapView :map="map" :transform="transform" :projection="projection"
               @focusRegion="bounds => focusRegion(bounds)"/>
-            <GraphView :graph="graph" :transform="transform" :projection="projection"/>
+            <GraphView :transform="transform" :projection="projection"
+              :graph="graph" :scalers="graphScalers(extents, ranges)"/>
           </g>
           <g v-show="selected === 'dist'">
-            <DistanceTopology ref="topo" :graph="graph" :transform="transform" :projection="projection"
-              :container="container"/>
+            <DistanceTopology ref="topo" :transform="transform" :projection="projection"
+              :container="container" :graph="graph" :scalers="graphScalers(extents, ranges)"/>
           </g>
         </svg>
       </div>

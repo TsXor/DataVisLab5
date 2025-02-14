@@ -2,21 +2,20 @@
 import * as d3 from 'd3';
 import { shallowReactive, watch, type PropType } from 'vue';
 import { type TrainGraph } from '@/core/data-adapter';
-import { graphScalers, routeDegree, routeDistance, routeShiftApprox, stationDegree } from '@/core/data-utils';
+import { routeDegree, routeDistance, routeShiftApprox, stationDegree, type Scalers } from '@/core/data-utils';
 import type { EdgeOf, VertexOf } from '@/core/graph/graph';
 import { d3ovr, vD3Apply, vD3Raise, type v } from '@/vueshim/d3v';
 import { svgu, vRely } from '@/vueshim/utils';
 
-const { transform, projection, graph, container } = defineProps({
+const { transform, projection, graph, scalers, container } = defineProps({
   transform: { type: Object as PropType<d3.ZoomTransform>, required: true },
   projection: { type: Function as PropType<d3.GeoProjection>, required: true },
   graph: { type: Object as PropType<TrainGraph>, required: true },
+  scalers: { type: Object as PropType<Scalers>, required: true },
   container: { type: Object as PropType<SVGSVGElement | null>, required: true },
 });
 
 const linear = d3.line();
-
-const scalers = $computed(() => graphScalers(graph));
 
 type GVertex = VertexOf<typeof graph>;
 type GEdge = EdgeOf<typeof graph>;
