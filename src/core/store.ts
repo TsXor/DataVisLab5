@@ -45,7 +45,7 @@ export const useGraphStore = defineStore('graph', () => {
 });
 
 export type PathType = 'distance' | 'duration';
-export const useSelectionStore = defineStore('selectionEdge', () => {
+export const useSelectionStore = defineStore('selection', () => {
   const path = shallowRef({
     type: 'distance' as PathType,
     edge: null as PathEdge | null,
