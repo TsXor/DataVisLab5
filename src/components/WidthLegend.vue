@@ -5,6 +5,9 @@ import { svgu } from '@/vueshim/utils';
 import BaseLegend from './BaseLegend.vue';
 
 
+const filterMin = defineModel<number>('filterMin');
+const filterMax = defineModel<number>('filterMax');
+
 defineSlots<{
   'icon-left'(props: { size: number }): any,
   'icon-right'(props: { size: number }): any,
@@ -38,7 +41,9 @@ const barPoints = $computed(() => {
 </script>
 
 <template>
-  <BaseLegend v-bind="props">
+  <BaseLegend v-bind="props"
+    v-model:filter-min="filterMin"
+    v-model:filter-max="filterMax">
     <template #bar>
       <polygon class="bar" :points="svgu.points(barPoints)"/>
     </template>

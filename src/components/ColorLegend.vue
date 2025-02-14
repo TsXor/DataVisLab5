@@ -6,6 +6,9 @@ import { svgu } from '@/vueshim/utils';
 import { d3u, vD3Render } from '@/vueshim/d3v';
 
 
+const filterMin = defineModel<number>('filterMin');
+const filterMax = defineModel<number>('filterMax');
+
 defineSlots<{
   'icon-left'(props: { color: string }): any,
   'icon-right'(props: { color: string }): any,
@@ -25,7 +28,9 @@ const colorGradientId = useId();
 </script>
 
 <template>
-  <BaseLegend v-bind="props">
+  <BaseLegend v-bind="props"
+    v-model:filter-min="filterMin"
+    v-model:filter-max="filterMax">
     <template #bar>
       <defs v-d3-render="d3u.rangeGradientX(colorGradientId, scaler.range())"/>
       <rect class="bar" :width="barWidth" :height="barHeight" :fill="svgu.urlId(colorGradientId)"/>

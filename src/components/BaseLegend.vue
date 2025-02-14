@@ -1,6 +1,6 @@
 <script setup lang="ts" generic="Range">
 import * as d3 from 'd3';
-import { watch, type PropType } from 'vue';
+import { computed, watch, type PropType } from 'vue';
 import { d3ovr, vD3Apply, vD3Render } from '@/vueshim/d3v';
 import { clamp } from '@vueuse/core';
 import { svgu } from '@/vueshim/utils';
@@ -28,17 +28,20 @@ const chooserPoints = [[0, 1], [0, -1], [-1, 0], [-1, 1]] as svgu.Point[];
 const leftChooserPoints = $computed(() => chooserPoints.map(([x, y]) => [x * chooserSize, y * chooserSize] as svgu.Point));
 const rightChooserPoints = $computed(() => leftChooserPoints.map(([x, y]) => [-x, y] as svgu.Point));
 
-let filterMin = $(defineModel<number>('filterMin', { default: NaN }));
-let filterMax = $(defineModel<number>('filterMax', { default: NaN }));
-watch(() => scaler, () => { const [min, max] = scaler.domain(); filterMin = min; filterMax = max; }, { immediate: true });
+let filterMin = $(defineModel<number>('filterMin'));
+let filterMax = $(defineModel<number>('filterMax'));
+watch(() => scaler, () => {
+  const [min, max] = scaler.domain();
+  filterMin = min; filterMax = max;
+}, { immediate: true });
 
-const leftX = $computed({
-  get: () => axisScale(filterMin!),
-  set: x => { filterMin = clamp(axisScale.invert(x), scaler.domain()[0], filterMax); }
+const leftX = computed({
+  get: () => axisScale(filterMin ?? scaler.domain()[0]),
+  set: x => { filterMin = clamp(axisScale.invert(x), scaler.domain()[0], filterMax ?? scaler.domain()[1]); }
 });
-const rightX = $computed({
-  get: () => axisScale(filterMax!),
-  set: x => { filterMax = clamp(axisScale.invert(x), filterMin, scaler.domain()[1]); }
+const rightX = computed({
+  get: () => axisScale(filterMax ?? scaler.domain()[1]),
+  set: x => { filterMax = clamp(axisScale.invert(x), filterMin ?? scaler.domain()[0], scaler.domain()[1]); }
 });
 </script>
 
