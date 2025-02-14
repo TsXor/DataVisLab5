@@ -4,9 +4,9 @@ import VisualPanel from './components/VisualPanel.vue';
 import MultiGraph from './components/MultiGraph.vue';
 import MultiDensityCurve from './components/MultiDensityCurve.vue';
 import MultiHeatMap from './components/MultiHeatMap.vue';
+import FilterExplorer from './components/FilterExplorer.vue';
 
 import resInfoIntro from '@/assets/html/intro.html?raw';
-import resInfoFilter from '@/assets/html/filter.html?raw';
 import resInfoParam from '@/assets/html/param.html?raw';
 import resIconDensityCurve from '@/assets/img/densitycurve.png'
 import resIconHeatmap from '@/assets/img/heatmap.png'
@@ -16,7 +16,9 @@ import resIconHeatmap from '@/assets/img/heatmap.png'
   <!-- 左侧栏 -->
   <InfoPanel id="left-panel">
     <div name="介绍"><div v-html="resInfoIntro"/></div>
-    <div name="过滤器"><div v-html="resInfoFilter"/></div>
+    <div name="过滤器">
+      <FilterExplorer/>
+    </div>
     <div name="参数"><div v-html="resInfoParam"/></div>
   </InfoPanel>
   <MultiGraph id="graph-view"/>

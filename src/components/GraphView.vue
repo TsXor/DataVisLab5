@@ -1,16 +1,34 @@
 <script setup lang="ts">
 import * as d3 from 'd3';
-import { watch, type PropType } from 'vue';
+import { computed, watch, type PropType } from 'vue';
 import { vD3Raise } from '@/vueshim/d3v';
 import type { EdgeOf, VertexOf } from '@/core/graph/graph';
 import { type TrainGraph } from '@/core/data-adapter';
-import { stationDegree, routeDegree, routeShiftApprox, type Scalers } from '@/core/data-utils';
+import { stationDegree, routeDegree, routeShiftApprox, type Scalers, filterRoute, filterStation, type RangeFilter } from '@/core/data-utils';
 import ColorLegend from './ColorLegend.vue';
 import WidthLegend from './WidthLegend.vue';
 import { svgu } from '@/vueshim/utils';
-import { useSelectionStore } from '@/core/store';
+import { useFilterStore, useSelectionStore } from '@/core/store';
 
 const globalSelection = useSelectionStore();
+
+const filter = useFilterStore();
+
+function filterMinMaxRef(range: () => RangeFilter) {
+  const min = computed({
+    get() { return range().min },
+    set(value) { range().min = value }
+  });
+  const max = computed({
+    get() { return range().max },
+    set(value) { range().max = value }
+  });
+  return { min, max };
+}
+const { min: stationDegreeMin, max: stationDegreeMax } = filterMinMaxRef(() => filter.station.stationDegree);
+const { min: stationAccessMin, max: stationAccessMax } = filterMinMaxRef(() => filter.station.stationAccess);
+const { min: routeDegreeMin, max: routeDegreeMax } = filterMinMaxRef(() => filter.route.routeDegree);
+const { min: routeShiftMin, max: routeShiftMax } = filterMinMaxRef(() => filter.route.routeShift);
 
 const { transform, projection, graph, scalers } = defineProps({
   transform: { type: Object as PropType<d3.ZoomTransform>, required: true },
@@ -59,6 +77,7 @@ function toggleChosenRoute(id: GEdge) { chosenRoute = chosenRoute === id ? null 
     <g>
       <!-- 将不常更新的属性提升，以减少更新开销 -->
       <g v-for="edge in graph.outOrderEdges()"
+        v-show="filterRoute(edge, filter.route)"
         :stroke-width="scalers.lineWidth(routeDegree(edge))"
         :stroke="scalers.lineColor(routeShiftApprox(edge))"
         v-d3-raise="isHoveredRoute(edge)">
@@ -93,6 +112,7 @@ function toggleChosenRoute(id: GEdge) { chosenRoute = chosenRoute === id ? null 
   </g>
   <g class="nodes">
     <g v-for="vertex in graph.vertices.values()"
+      v-show="filterStation(vertex, filter.station)"
       :transform="svgu.translateOf(stationPosition(vertex))"
       v-d3-raise="isHoveredStation(vertex)">
       <g class="station"
@@ -122,6 +142,8 @@ function toggleChosenRoute(id: GEdge) { chosenRoute = chosenRoute === id ? null 
   </g>
   <g class="legends">
     <ColorLegend :scaler="scalers.nodeColor"
+      v-model:filter-min="stationAccessMin"
+      v-model:filter-max="stationAccessMax"
       :transform="svgu.translate(20, 20)"
       :icon-width="20" :icon-height="15"
       caption="节点颜色：年均到达人数（单位：万人）">
@@ -133,6 +155,8 @@ function toggleChosenRoute(id: GEdge) { chosenRoute = chosenRoute === id ? null 
       </template>
     </ColorLegend>
     <ColorLegend :scaler="scalers.lineColor"
+      v-model:filter-min="routeShiftMin"
+      v-model:filter-max="routeShiftMax"
       :transform="svgu.translate(20, 80)"
       :icon-width="20" :icon-height="15"
       caption="边颜色：年均客流量（单位：万人）">
@@ -144,6 +168,8 @@ function toggleChosenRoute(id: GEdge) { chosenRoute = chosenRoute === id ? null 
       </template>
     </ColorLegend>
     <WidthLegend :scaler="scalers.nodeRadius"
+      v-model:filter-min="stationDegreeMin"
+      v-model:filter-max="stationDegreeMax"
       :transform="svgu.translate(20, 140)"
       :icon-width="20" :icon-height="15"
       caption="节点宽度：节点的度">
@@ -155,6 +181,8 @@ function toggleChosenRoute(id: GEdge) { chosenRoute = chosenRoute === id ? null 
       </template>
     </WidthLegend>
     <WidthLegend :scaler="scalers.lineWidth"
+      v-model:filter-min="routeDegreeMin"
+      v-model:filter-max="routeDegreeMax"
       :transform="svgu.translate(20, 200)"
       :icon-width="20" :icon-height="15"
       caption="边宽度：边的度（两端节点的平均度数）">

@@ -1,6 +1,7 @@
 import * as d3 from 'd3';
 import type { EdgeOf, VertexOf } from "./graph/graph";
 import type { TrainGraph } from "./data-adapter";
+import { isDefined } from '@vueuse/core';
 
 export function stationDegree(station: VertexOf<TrainGraph>) {
   return station.in.size + station.out.size;
@@ -75,4 +76,39 @@ export function globalDistance(src: [number, number], dst: [number, number]): nu
     Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
+}
+
+export type RangeFilter = {
+  min?: number;
+  max?: number;
+};
+
+export function filterRange(value: number, range?: RangeFilter) {
+  if (!range) return true;
+  const { min, max } = range;
+  if (isDefined(min) && value < min) return false;
+  if (isDefined(max) && value > max) return false;
+  return true;
+}
+
+export type StationFilter = {
+  stationDegree: RangeFilter;
+  stationAccess: RangeFilter;
+};
+
+export type RouteFilter = {
+  routeDegree: RangeFilter;
+  routeShift: RangeFilter;
+};
+
+export function filterStation(station: VertexOf<TrainGraph>, filter: Partial<StationFilter>) {
+  if (!filterRange(stationDegree(station), filter.stationDegree)) return false;
+  if (!filterRange(station.data.access, filter.stationAccess)) return false;
+  return true;
+}
+
+export function filterRoute(route: EdgeOf<TrainGraph>, filter: Partial<RouteFilter>) {
+  if (!filterRange(routeDegree(route), filter.routeDegree)) return false;
+  if (!filterRange(routeShiftApprox(route), filter.routeShift)) return false;
+  return true;
 }
