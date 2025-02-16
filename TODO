@@ -71,3 +71,5 @@ ctx.mapContext.clear();
 ctx.graphContext.clear();
 ctx.graphContext.init("distance");
 ctx.graphContext.render();
+
+- 上述奇怪的bug已被解决，因为原来的代码结构不复存在。
