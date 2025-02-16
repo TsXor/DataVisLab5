@@ -1,7 +1,7 @@
 <script setup lang="ts">
+import { svgu } from '@/vueshim/utils';
 import * as d3 from 'd3';
 import { type PropType } from 'vue';
-import { svgu } from '@/vueshim/utils';
 import BaseLegend from './BaseLegend.vue';
 
 

@@ -1,11 +1,11 @@
-import { computed, ref, shallowRef, triggerRef, watch, type Ref } from 'vue';
-import { defineStore } from 'pinia'
 import { useAsyncState } from '@vueuse/core';
-import { asSuccess, patchObject, type ObjectChange, type ObjectPath } from './utils';
+import { defineStore } from 'pinia';
+import { computed, ref, shallowRef, triggerRef, watch, type Ref } from 'vue';
 import { collectMapData, collectTrainGraph, type TrainGraph } from './data-adapter';
 import { graphExtents, routeDistance, routeDuration, type RouteFilter, type StationFilter } from './data-utils';
-import { extractWeights, multiDijkstra, walkPathEdges, type PathEdge } from './graph/shortest-path';
 import type { EdgeOf, VertexOf } from './graph/graph';
+import { extractWeights, multiDijkstra, walkPathEdges, type PathEdge } from './graph/shortest-path';
+import { asSuccess, patchObject, type ObjectChange } from './utils';
 
 
 export const useRemoteDataStore = defineStore('remoteData', () => {

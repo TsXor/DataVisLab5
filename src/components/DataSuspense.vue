@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { asSuccess } from '@/core/utils';
 import { type TrainGraph } from '@/core/data-adapter';
+import type { DataExtents } from '@/core/data-utils';
 import type { render } from '@/core/dtypes';
 import { useGraphStore, useRemoteDataStore } from '@/core/store';
-import type { DataExtents } from '@/core/data-utils';
+import { asSuccess } from '@/core/utils';
 
 defineSlots<{
   default(props: { graph: TrainGraph; map: render.MapData, extents: DataExtents }): any

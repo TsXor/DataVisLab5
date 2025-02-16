@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import * as d3 from 'd3';
-import { ref, shallowRef, type PropType } from 'vue';
-import { graphScalers, type ScaleRanges } from '@/core/data-utils'; 
+import { graphScalers, type ScaleRanges } from '@/core/data-utils';
+import { useSelectionStore } from '@/core/store';
 import { d3ovr, d3u, vD3Apply } from '@/vueshim/d3v';
 import { svgu, vElRef } from '@/vueshim/utils';
+import * as d3 from 'd3';
+import { ref, shallowRef, type PropType } from 'vue';
 import DataSuspense from './DataSuspense.vue';
-import MapView from './MapView.vue';
-import GraphView from './GraphView.vue';
 import DistanceTopology from './DistanceTopology.vue';
-import { useSelectionStore } from '@/core/store';
+import GraphView from './GraphView.vue';
+import MapView from './MapView.vue';
 
 const globalSelection = useSelectionStore();
 

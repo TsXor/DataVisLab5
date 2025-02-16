@@ -1,8 +1,8 @@
 <script setup lang="ts" generic="Range">
-import { type PropType } from 'vue';
-import useVuelidate from '@vuelidate/core';
-import { or, numeric } from '@vuelidate/validators';
 import type { RangeFilter } from '@/core/data-utils';
+import useVuelidate from '@vuelidate/core';
+import { numeric, or } from '@vuelidate/validators';
+import { type PropType } from 'vue';
 
 const emit = defineEmits<{
   edit: [data: RangeFilter];

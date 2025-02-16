@@ -1,14 +1,14 @@
 <script setup lang="ts">
+import { type TrainGraph } from '@/core/data-adapter';
+import { filterRoute, filterStation, routeDegree, routeShiftApprox, stationDegree, type RangeFilter, type Scalers } from '@/core/data-utils';
+import type { EdgeOf, VertexOf } from '@/core/graph/graph';
+import { useFilterStore, useSelectionStore } from '@/core/store';
+import { vD3Raise } from '@/vueshim/d3v';
+import { svgu } from '@/vueshim/utils';
 import * as d3 from 'd3';
 import { computed, watch, type PropType } from 'vue';
-import { vD3Raise } from '@/vueshim/d3v';
-import type { EdgeOf, VertexOf } from '@/core/graph/graph';
-import { type TrainGraph } from '@/core/data-adapter';
-import { stationDegree, routeDegree, routeShiftApprox, type Scalers, filterRoute, filterStation, type RangeFilter } from '@/core/data-utils';
 import ColorLegend from './ColorLegend.vue';
 import WidthLegend from './WidthLegend.vue';
-import { svgu } from '@/vueshim/utils';
-import { useFilterStore, useSelectionStore } from '@/core/store';
 
 const globalSelection = useSelectionStore();
 

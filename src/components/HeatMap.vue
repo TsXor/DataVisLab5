@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import * as d3 from 'd3';
-import { useId, watch, type PropType } from 'vue';
 import { walkPathVertices, type PathEdge, type PathGraph } from '@/core/graph/shortest-path';
-import type { ElementOf } from '@vueuse/core';
+import { d3u, vD3Raise, vD3Render } from '@/vueshim/d3v';
 import { calcTextbox, svgu } from '@/vueshim/utils';
-import { d3u, vD3Render, vD3Raise } from '@/vueshim/d3v';
+import type { ElementOf } from '@vueuse/core';
+import * as d3 from 'd3';
+import { useId, type PropType } from 'vue';
 
 
 const { graph, legendSize, labelWidth, gridSize } = defineProps({

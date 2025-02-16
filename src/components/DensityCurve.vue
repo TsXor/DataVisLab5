@@ -1,10 +1,10 @@
 <script setup lang="ts">
+import type { PathGraph } from '@/core/graph/shortest-path';
+import { v, vD3Render } from '@/vueshim/d3v';
+import { svgu } from '@/vueshim/utils';
+import type { ElementOf } from '@vueuse/core';
 import * as d3 from 'd3';
 import type { PropType } from 'vue';
-import { v, vD3Render } from '@/vueshim/d3v';
-import type { PathGraph } from '@/core/graph/shortest-path';
-import type { ElementOf } from '@vueuse/core';
-import { svgu } from '@/vueshim/utils';
 
 
 // 是的，想想线代！

@@ -1,7 +1,7 @@
 <script setup lang="ts">
+import type { data, render } from '@/core/dtypes';
 import * as d3 from 'd3';
 import { watch, type PropType } from 'vue';
-import type { data, render } from '@/core/dtypes';
 
 const emit = defineEmits<{
   focusRegion: [bounds?: [[number, number], [number, number]]];

@@ -1,6 +1,6 @@
+import type { Arrayable } from '@vueuse/core';
 import * as d3 from 'd3';
 import { shallowRef, type DirectiveBinding } from 'vue';
-import type { Arrayable } from '@vueuse/core';
 
 export namespace d3ovr {
 

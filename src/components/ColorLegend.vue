@@ -1,9 +1,9 @@
 <script setup lang="ts">
+import { d3u, vD3Render } from '@/vueshim/d3v';
+import { svgu } from '@/vueshim/utils';
 import * as d3 from 'd3';
 import { useId, type PropType } from 'vue';
 import BaseLegend from './BaseLegend.vue';
-import { svgu } from '@/vueshim/utils';
-import { d3u, vD3Render } from '@/vueshim/d3v';
 
 
 const filterMin = defineModel<number>('filterMin');

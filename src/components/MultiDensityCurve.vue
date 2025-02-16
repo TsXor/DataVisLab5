@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref } from 'vue';
 import { useGraphStore } from '@/core/store';
+import { ref } from 'vue';
 import DensityCurve from './DensityCurve.vue';
 
 const graph = useGraphStore();

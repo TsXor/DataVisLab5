@@ -7,8 +7,8 @@ import BaseSwitch from './BaseSwitch.vue';
 import Dragger from './Dragger.vue';
 import UseVNode from './UseVNode.vue';
 
-import resIconMove from '@/assets/img/move.svg'
-import resIconResize from '@/assets/img/resize.svg'
+import resIconMove from '@/assets/img/move.svg';
+import resIconResize from '@/assets/img/resize.svg';
 
 const choice = defineModel({ type: Number, default: -1, });
 

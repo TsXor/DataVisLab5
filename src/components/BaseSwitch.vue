@@ -4,9 +4,9 @@
  * `model`值为`default`槽中被选中元素的下标，无已选中元素时值为`-1`。
  */
 
-import { type VNode } from 'vue';
-import { clsx } from "@nberlette/clsx";
 import { expandFragments } from '@/vueshim/utils';
+import { clsx } from "@nberlette/clsx";
+import { type VNode } from 'vue';
 
 let choice = $(defineModel({ type: Number, default: -1, }));
 

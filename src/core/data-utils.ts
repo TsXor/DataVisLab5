@@ -1,7 +1,7 @@
-import * as d3 from 'd3';
-import type { EdgeOf, VertexOf } from "./graph/graph";
-import type { TrainGraph } from "./data-adapter";
 import { isDefined } from '@vueuse/core';
+import * as d3 from 'd3';
+import type { TrainGraph } from "./data-adapter";
+import type { EdgeOf, VertexOf } from "./graph/graph";
 
 export function stationDegree(station: VertexOf<TrainGraph>) {
   return station.in.size + station.out.size;

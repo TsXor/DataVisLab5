@@ -1,9 +1,9 @@
 <script setup lang="ts" generic="Range">
+import { d3ovr, vD3Apply, vD3Render } from '@/vueshim/d3v';
+import { svgu } from '@/vueshim/utils';
+import { clamp } from '@vueuse/core';
 import * as d3 from 'd3';
 import { computed, watch, type PropType } from 'vue';
-import { d3ovr, vD3Apply, vD3Render } from '@/vueshim/d3v';
-import { clamp } from '@vueuse/core';
-import { svgu } from '@/vueshim/utils';
 
 defineSlots<{
   'icon-left'(props: { min: Range }): any,

@@ -4,8 +4,8 @@
  */
 
 import BaseSwitch from './BaseSwitch.vue';
-import UseVNode from './UseVNode.vue';
 import Dragger from './Dragger.vue';
+import UseVNode from './UseVNode.vue';
 
 const choice = defineModel({ type: Number, default: -1, });
 

@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
 import { useGraphStore, useSelectionStore, type PathType } from '@/core/store';
+import { computed, ref } from 'vue';
 import HeatMap from './HeatMap.vue';
 
 const graph = useGraphStore();

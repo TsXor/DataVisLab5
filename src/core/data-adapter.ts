@@ -1,7 +1,6 @@
-import * as d3 from 'd3';
 import type { data, render } from "./dtypes";
+import { Graph } from "./graph/graph";
 import type { Result } from "./utils";
-import { Graph, type EdgeOf, type VertexOf } from "./graph/graph";
 
 function unwrapImport<T>(promise: Promise<any>): Promise<T> {
   return promise.then(o => o.default) as Promise<T>;
