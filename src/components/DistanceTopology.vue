@@ -12,7 +12,7 @@ const { transform, projection, graph, scalers, container } = defineProps({
   projection: { type: Function as PropType<d3.GeoProjection>, required: true },
   graph: { type: Object as PropType<TrainGraph>, required: true },
   scalers: { type: Object as PropType<Scalers>, required: true },
-  container: { type: Object as PropType<SVGSVGElement | null>, required: true },
+  container: { type: [Object, null] as PropType<SVGSVGElement | null>, required: true },
 });
 
 const linear = d3.line();
