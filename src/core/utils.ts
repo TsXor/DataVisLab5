@@ -77,3 +77,18 @@ export function asSuccess<Success, Failure>(result: Result<Success, Failure>) {
 export function asFailure<Success, Failure>(result: Result<Success, Failure>) {
   return (result as { success: false; failure: Failure }).failure;
 }
+
+export function testJSON(text: string) {
+  try { JSON.parse(text); return true; }
+  catch (error) { return false; }
+}
+
+export type ObjectPath = (number | string)[];
+export type ObjectChange = { path: ObjectPath, value: any };
+
+export function patchObject(obj: any, path: ObjectPath, value: any) {
+  if (path.length === 0) return;
+  const last = path[path.length - 1];
+  for (let i = 0; i < path.length - 1; ++i) { obj = obj[path[i]]; }
+  obj[last] = value;
+}

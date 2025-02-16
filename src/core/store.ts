@@ -1,11 +1,11 @@
-import { computed, ref, shallowRef, watch } from 'vue';
+import { computed, ref, shallowRef, triggerRef, watch, type Ref } from 'vue';
 import { defineStore } from 'pinia'
 import { useAsyncState } from '@vueuse/core';
-import { asSuccess } from './utils';
+import { asSuccess, patchObject, type ObjectChange, type ObjectPath } from './utils';
 import { collectMapData, collectTrainGraph, type TrainGraph } from './data-adapter';
 import { graphExtents, routeDistance, routeDuration, type RouteFilter, type StationFilter } from './data-utils';
 import { extractWeights, multiDijkstra, walkPathEdges, type PathEdge } from './graph/shortest-path';
-import type { EdgeOf } from './graph/graph';
+import type { EdgeOf, VertexOf } from './graph/graph';
 
 
 export const useRemoteDataStore = defineStore('remoteData', () => {
@@ -21,6 +21,7 @@ export const useRemoteDataStore = defineStore('remoteData', () => {
 export const useGraphStore = defineStore('graph', () => {
   const baseData = useRemoteDataStore();
   const graph = shallowRef<TrainGraph | null>(null);
+  function trigger() { triggerRef(graph); }
   watch(() => baseData.isReady, ready => {
     if (ready) { graph.value = asSuccess(baseData.graph.state!); }
   });
@@ -41,7 +42,7 @@ export const useGraphStore = defineStore('graph', () => {
   const duration = shortestPath(routeDuration);
   const extents = computed(() => graph.value ? graphExtents(graph.value) : null);
   const isReady = computed(() => Boolean(graph.value && extents.value));
-  return { graph, distance, duration, extents, isReady };
+  return { graph, trigger, distance, duration, extents, isReady };
 });
 
 export type PathType = 'distance' | 'duration';
@@ -64,7 +65,26 @@ export const useSelectionStore = defineStore('selection', () => {
       }
     })());
   });
-  return { path, pathEdges };
+  const stationSource = shallowRef<VertexOf<TrainGraph> | null>(null);
+  const stationTarget = shallowRef<VertexOf<TrainGraph> | null>(null);
+  const route = shallowRef<EdgeOf<TrainGraph> | null>(null);
+  function patchParam(obj: Ref<{ data: any } | null>) {
+    return (changes: Iterable<ObjectChange>) => {
+      if (obj.value === null) return;
+      const data = obj.value.data;
+      for (const change of changes)
+        patchObject(data, change.path, change.value);
+      triggerRef(obj); graph.trigger();
+    };
+  }
+  const patchStationSource = patchParam(stationSource);
+  const patchStationTarget = patchParam(stationTarget);
+  const patchRoute = patchParam(route);
+  return {
+    path, pathEdges,
+    stationSource, stationTarget, route,
+    patchStationSource, patchStationTarget, patchRoute
+  };
 });
 
 export const useFilterStore = defineStore('filter', () => {

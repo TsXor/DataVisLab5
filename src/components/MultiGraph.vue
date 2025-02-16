@@ -8,6 +8,9 @@ import DataSuspense from './DataSuspense.vue';
 import MapView from './MapView.vue';
 import GraphView from './GraphView.vue';
 import DistanceTopology from './DistanceTopology.vue';
+import { useSelectionStore } from '@/core/store';
+
+const globalSelection = useSelectionStore();
 
 const ranges: ScaleRanges = {
   nodeRadius: [5, 15],
@@ -93,7 +96,10 @@ function focusRegion(bounds?: [[number, number], [number, number]]) {
             <MapView :map="map" :transform="transform" :projection="projection"
               @focusRegion="bounds => focusRegion(bounds)"/>
             <GraphView :transform="transform" :projection="projection"
-              :graph="graph" :scalers="graphScalers(extents, ranges)"/>
+              :graph="graph" :scalers="graphScalers(extents, ranges)"
+              v-model:chosen-source="globalSelection.stationSource"
+              v-model:chosen-target="globalSelection.stationTarget"
+              v-model:chosen-route="globalSelection.route"/>
           </g>
           <g v-show="selected === 'dist'">
             <DistanceTopology ref="topo" :transform="transform" :projection="projection"
