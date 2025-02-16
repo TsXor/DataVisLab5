@@ -6,8 +6,8 @@ import MultiDensityCurve from './components/MultiDensityCurve.vue';
 import MultiHeatMap from './components/MultiHeatMap.vue';
 import FilterExplorer from './components/FilterExplorer.vue';
 import ParamExplorer from './components/ParamExplorer.vue';
+import Intro from './components/Intro.vue';
 
-import resInfoIntro from '@/assets/html/intro.html?raw';
 import resIconDensityCurve from '@/assets/img/densitycurve.png'
 import resIconHeatmap from '@/assets/img/heatmap.png'
 </script>
@@ -15,7 +15,9 @@ import resIconHeatmap from '@/assets/img/heatmap.png'
 <template>
   <!-- 左侧栏 -->
   <InfoPanel id="left-panel">
-    <div name="介绍"><div v-html="resInfoIntro"/></div>
+    <div name="介绍">
+      <Intro/>
+    </div>
     <div name="过滤器">
       <FilterExplorer/>
     </div>
